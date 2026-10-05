@@ -14,7 +14,7 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 | Aspekt | Festlegung |
 |---|---|
 | **Single Source of Truth** | `canon/entities.md` (menschlich lesbar) + `canon/entities.schema.json` (maschinenlesbar) definieren verbindlich, wie Gauge-Entities heißen und aussehen. |
-| **Master/Stil-Referenz** | [`ha-go-gauge`](https://github.com/Popoboxxo/ha-go-gauge) — wo sich Integrationen unterscheiden, gilt `go_gauge` **1.5.2** als Kanon-Entscheidung, sofern unten nicht anders festgelegt. |
+| **Master/Stil-Referenz** | [`ha-go-gauge`](https://github.com/Popoboxxo/ha-go-gauge) — wo sich Integrationen unterscheiden, gilt `go_gauge` **1.6.0** als Kanon-Entscheidung, sofern unten nicht anders festgelegt. |
 | **Consumer** | [`ha-go-gauge`](https://github.com/Popoboxxo/ha-go-gauge) (`go_gauge`) und [`ha-command-gauge`](https://github.com/Popoboxxo/ha-command-gauge) (`command_gauge`). `command_gauge` ist das aktive **Konvergenz-Ziel**. |
 | **Paar-Change-Pflicht** | Jede Kanon-Änderung ist ein **Paar-Change**: sie wird in beiden Integrationen umgesetzt (soweit die jeweilige API hergibt) — nie nur in einem Repo. |
 | **Ausnahmen** | Domain-begründete Divergenz ist nur mit ⚠️-Eintrag im Kanon erlaubt, inkl. Begründung und **Schließungsbedingung** (*closing condition*). |
@@ -23,7 +23,7 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 
 ```
 canon/
-  entities.md          # verbindlicher Kanon v1 (menschenlesbar, Deutsch)
+  entities.md          # verbindlicher Kanon v1.1 (menschenlesbar, Deutsch)
   entities.schema.json # maschinenlesbare Version (prüfbar)
 scripts/
   check_canon.py       # Prüft eine Integration gegen entities.schema.json
@@ -76,5 +76,7 @@ matrix/
 
 ## Status
 
-Kanon **v1** — abgeleitet aus `go_gauge` 1.5.2 (Master) und
-`command_gauge` 0.2.0 (Konvergenz-Ziel), Stand 2026-10-04.
+Kanon **v1.1** — abgeleitet aus `go_gauge` 1.6.0 (Master) und
+`command_gauge` 0.2.0 (Konvergenz-Ziel), Stand 2026-10-05. Neu in v1.1:
+Scope-Status-Sensor `api_status` (go_gauge 1.6.0) und `subscription_active`
+ohne device_class.

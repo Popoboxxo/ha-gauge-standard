@@ -1,10 +1,10 @@
 {
-  "canon_version": "1.0.0",
-  "stand": "2026-10-04",
+  "canon_version": "1.1.0",
+  "stand": "2026-10-05",
   "master": {
     "repo": "Popoboxxo/ha-go-gauge",
     "domain": "go_gauge",
-    "version": "1.5.2"
+    "version": "1.6.0"
   },
   "convergence_target": {
     "repo": "Popoboxxo/ha-command-gauge",
@@ -169,10 +169,27 @@
       "translation_key": "subscription_active",
       "aliases": {"command_gauge": "subscription_active"},
       "name_en": "Subscription Active",
-      "device_class": "CONNECTIVITY",
+      "device_class": null,
       "icons": ["mdi:shield-check-outline"],
       "unique_id_suffix": "subscription_active",
-      "attributes": ["workspace_key", "note"]
+      "attributes": ["workspace_key", "note"],
+      "behavior": "ON on ok, OFF on no_subscription (note attribute), else unknown; NO device_class since 1.6.0 (CONNECTIVITY rendered as disconnected and was misread as API outage)"
+    },
+    {
+      "id": "api_status",
+      "platform": "sensor",
+      "scope": "scope",
+      "translation_key": "api_status",
+      "aliases": {},
+      "name_en": "API Status",
+      "unit": null,
+      "device_class": "ENUM",
+      "state_class": null,
+      "options": ["ok", "no_subscription", "rate_limited", "auth_error", "api_error", "unknown"],
+      "icons": ["mdi:cloud-alert"],
+      "unique_id_suffix": "api_status",
+      "attributes": ["workspace_key", "raw_status", "note", "last_update_success"],
+      "behavior": "Per-scope cause-of-failure enum (not account-wide): ok; ok+rate-limited window -> rate_limited; no_subscription (403 EntitlementError); error with AuthError/401 in note -> auth_error; other error -> api_error (transient); else unknown. Raw enum keys, no state translations; entity_registry_enabled_default True"
     },
     {
       "id": "api_reachable",
@@ -372,10 +389,11 @@
       {"id": "rate_limited", "aspect": "name_pattern", "severity": "warning", "actual": "Usage limit exceeded {window}", "reason": "CG-NAME1", "closing": "Rename"},
       {"id": "rate_limited", "aspect": "icons", "severity": "warning", "actual": [], "reason": "kein Icon gesetzt", "closing": "Kanon-Icon nachziehen"},
       {"id": "rate_limited", "aspect": "unique_id_suffix", "severity": "warning", "actual": "exceeded", "reason": "Suffix 'exceeded' statt 'limited'", "closing": "Registry-Migration mit Rename"},
-      {"id": "subscription_active", "aspect": "device_class", "severity": "warning", "actual": "RUNNING", "reason": "RUNNING statt CONNECTIVITY", "closing": "mit CG-W2 an Kanon angleichen"},
+      {"id": "subscription_active", "aspect": "device_class", "severity": "warning", "actual": "RUNNING", "reason": "RUNNING statt kanon-frei (Kanon seit 1.6.0: kein device_class — CONNECTIVITY-Rendering war irrefuehrend)", "closing": "mit CG-W2: device_class entfernen"},
       {"id": "subscription_active", "aspect": "attributes", "severity": "warning", "actual": [], "reason": "keine workspace_key/note-Attribute", "closing": "nachziehen"},
       {"id": "subscription_active", "aspect": "icons", "severity": "warning", "actual": [], "reason": "kein Icon gesetzt", "closing": "Kanon-Icon nachziehen"},
       {"id": "subscription_active", "aspect": "name_pattern", "severity": "warning", "actual": "Subscription active", "reason": "Kleinschreibung statt Kanon-Casing", "closing": "mit CG-W2"},
+      {"id": "api_status", "aspect": "presence", "severity": "warning", "actual": null, "reason": "CommandCode-API liefert Abo-/API-Status nur konto-weit (subscription.status), kein Scope-Status-Modell mit no_subscription/rate_limited", "closing": "nur bei API-Erweiterung (vgl. CG-W3, CG-C2)"},
       {"id": "api_reachable", "aspect": "translation_key", "severity": "warning", "actual": "account_reachable", "reason": "Konto-Erreichbarkeit statt API-Reachability-Naming", "closing": "Entscheidung mit CG-W2"},
       {"id": "api_reachable", "aspect": "unique_id_suffix", "severity": "warning", "actual": "account_reachable", "reason": "Suffix folgt dem Alias", "closing": "mit Rename"},
       {"id": "api_reachable", "aspect": "name_pattern", "severity": "warning", "actual": "Account reachable", "reason": "Kleinschreibung + Alias-Wortlaut", "closing": "mit CG-W2"},

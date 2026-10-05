@@ -1,6 +1,6 @@
 # Gauge Parity-Matrix (Pflegedatei)
 
-Stand: 2026-10-04 · Kanon **v1** (`canon/entities.md`, Master = go_gauge 1.5.2) ·
+Stand: 2026-10-05 · Kanon **v1.1** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
 Vorgänger: `docs/parity-with-go-gauge.md` in ha-command-gauge (wird von dieser
 Datei abgelöst, sobald die Submodule-Einbindung steht).
 
@@ -8,7 +8,7 @@ Datei abgelöst, sobald die Submodule-Einbindung steht).
 Schließungsbedingung) · ❌ = unregistrierte Abweichung = Fehler · — = existiert
 nicht (domain-seitig begründet).
 
-Checker-Ergebnisse (Stand 2026-10-04):
+Checker-Ergebnisse (Stand 2026-10-05):
 `check_canon.py` → go_gauge: **0 Fehler / 0 Warnungen** (Referenz = grün) ·
 command_gauge: **0 Fehler / 54 registrierte Warnungen** (Exit 0).
 
@@ -35,6 +35,12 @@ command_gauge: **0 Fehler / 54 registrierte Warnungen** (Exit 0).
 | `burn_rate` (%/h) | ✅ | ✅ (Alias `window_burn_rate`) | ⚠️ CG-W2 |
 | Fenster | ✅ 5h/week/month | ⚠️ 5h/week | ⚠️ CG-W1 (API) |
 
+## Scope-Status (je Scope)
+
+| Entity | go_gauge | command_gauge | Status |
+|---|---|---|---|
+| `api_status` (ENUM-Ursache statt Ja/Nein) | ✅ (seit 1.6.0) | — (API: kein Scope-Status-Modell) | ⚠️ CG-B5 (API-blockiert) |
+
 ## Konto- / Katalog-Sensoren
 
 | Entity | go_gauge | command_gauge | Status |
@@ -52,7 +58,7 @@ command_gauge: **0 Fehler / 54 registrierte Warnungen** (Exit 0).
 | Entity | go_gauge | command_gauge | Status |
 |---|---|---|---|
 | `rate_limited` (PROBLEM, je Fenster) | ✅ | ⚠️ `window_exceeded`, kein Icon, Suffix `exceeded` | ⚠️ CG-B1 |
-| `subscription_active` (CONNECTIVITY) | ✅ | ⚠️ RUNNING, keine Attribute, kein Icon | ⚠️ CG-B3 |
+| `subscription_active` (kein device_class) | ✅ | ⚠️ RUNNING, keine Attribute, kein Icon | ⚠️ CG-B3 |
 | `api_reachable` (konto-weit) | ✅ (Catalog Owner) | ⚠️ `account_reachable`, immer verfügbar | ⚠️ CG-B2 |
 | `credits_below_threshold` | — | ✅ (domain-erlaubt) | ✅ domain CG-B4 |
 
@@ -105,8 +111,9 @@ command_gauge: **0 Fehler / 54 registrierte Warnungen** (Exit 0).
 | CG-NAME1 | Wortstellung `Usage {window}` | mit CG-W2 |
 | CG-B1 | `window_exceeded` statt `rate_limited` | mit CG-W2 |
 | CG-B2 | `account_reachable` | Entscheidung mit CG-W2 |
-| CG-B3 | subscription_active: RUNNING, keine Attribute | mit CG-W2 |
+| CG-B3 | subscription_active: RUNNING, keine Attribute | mit CG-W2 (Kanon: kein device_class) |
 | CG-B4 | `credits_below_threshold` | domain-erlaubt, entfällt |
+| CG-B5 | `api_status` fehlt | nur bei CommandCode-API-Erweiterung |
 | CG-C1 | Katalog-Attribute unvollständig | CommandCode-API liefert Pricing |
 | CG-C2 | live/cheapest/free-Modelle fehlen | nur bei API-Erweiterung |
 | CG-N1 | Number-Keys/Icons/Ranges | Angleichung mit CG-W2 prüfen |

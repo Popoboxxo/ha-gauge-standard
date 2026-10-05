@@ -1,7 +1,7 @@
-# Gauge Entity Canon v1
+# Gauge Entity Canon v1.1
 
 Verbindliche Spezifikation des Entity-Modells aller Gauge-Integrationen
-(`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 1.5.2**.
+(`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 1.6.0**.
 Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 (→ Abschnitt „Ausnahmeregelung").
 
@@ -69,18 +69,55 @@ die Kanon-Keys im nächsten breaking Release (MAJOR).
 ⚠️ **CG-W3 (command_gauge, usage):** kein `no_subscription`-Schutz, keine
 Attribute, unique_id-Suffix `usage` statt `percent`. — *Schließung:* dto.
 
-## 4. Binary Sensoren
+## 4. Scope-Status: API Status (Sensor, je Scope)
+
+Ursachen-Sensor der Erreichbarkeits-Familie (neu in go_gauge 1.6.0): benennt,
+**warum** ein Scope (keine) Daten liefert — Ergänzung zum Ja/Nein der
+Binary-Sensoren. Anlass: Der Abo-Sensor renderte mit CONNECTIVITY „Getrennt"
+und wurde als API-Ausfall fehlinterpretiert.
+
+| Konzept | translation_key | device_class | States | Icon | unique_id-Suffix | Attribute | EN-Name |
+|---|---|---|---|---|---|---|---|
+| API Status (je Scope) | `api_status` | ENUM | `ok`, `no_subscription`, `rate_limited`, `auth_error`, `api_error`, `unknown` | `mdi:cloud-alert` | `api_status` | `workspace_key`, `raw_status`, `note`, `last_update_success` | `API Status` |
+
+**Verhalten (Kanon, go_gauge):**
+
+- Bewusst **je Scope**, nicht accountweit: der accountweite `api_reachable`
+  aggregiert („irgendwas ging schief") und verdeckt genau den Mix aus
+  liefert-Daten/kein-Abo zwischen Scopes.
+- Auflösung: `ok` = API liefert Nutzungsdaten; `ok` + ein rate-limitedes
+  Fenster → `rate_limited` (relevantere Ursache als „alles gut" bei 100 %);
+  `no_subscription` = 403 EntitlementError (Token gültig, Abo fehlt);
+  `error` mit `AuthError`/`401` in `note` → `auth_error` (Konfig-Problem,
+  kein Code-Bug); sonstiger `error` (403 ohne Entitlement, 5xx, Netz) →
+  `api_error` (transient); Workspace unbekannt oder Status fremd → `unknown`.
+- Enum-States werden **roh** gerendert (keine lokalisierten
+  `state`-Übersetzungen) — Marken/Alarme bauen auf den stabilen Keys.
+- Keine Unit, kein state_class; `entity_registry_enabled_default = True`.
+
+⚠️ **CG-B5:** command_gauge implementiert `api_status` nicht — die
+CommandCode-API liefert den Abo-/API-Status nur konto-weit
+(`subscription.status`: active/trialing/paid/…), kein Scope-Status-Modell
+mit `no_subscription`/`rate_limited`. — *Schließung:* nur bei API-Erweiterung
+(vgl. CG-W3, CG-C2).
+
+## 5. Binary Sensoren
 
 | Konzept | translation_key | device_class | Icon | unique_id-Suffix | Attribute | EN-Name |
 |---|---|---|---|---|---|---|
 | Rate Limited (je Fenster) | `rate_limited` | PROBLEM | `mdi:block-helper` | `limited` | — | `{window} rate-limited` |
-| Subscription Active (je Scope) | `subscription_active` | CONNECTIVITY | `mdi:shield-check-outline` | `subscription_active` | `workspace_key`, `note` | `Subscription Active` |
+| Subscription Active (je Scope) | `subscription_active` | — (keine) | `mdi:shield-check-outline` | `subscription_active` | `workspace_key`, `note` | `Subscription Active` |
 | API Reachable (konto-weit) | `api_reachable` | CONNECTIVITY | — (HA-Default) | `api_reachable` | — | `API Reachable` |
 
 Verhalten: `rate_limited` ON bei Fenster-Status `rate-limited`; bei
 `no_subscription`/Update-Fehler `unavailable` (nicht OFF).
 `api_reachable` ON bei `last_update_success` und vorhandenem `fetched_at`;
 nur vom Catalog Owner (go_gauge).
+`subscription_active` ON bei Scope-Status `ok`, OFF bei `no_subscription`
+(Attribut `note` trägt die Ursache), sonst `unknown` (None). **Kein
+device_class** (Kanon seit 1.6.0): CONNECTIVITY ließ HA den Zustand als
+„Getrennt" rendern — ein Abo ist ein Subskriptionszustand, keine Verbindung;
+Verbindung ist allein Sache von `api_reachable`.
 
 ⚠️ **CG-B1:** command_gauge nutzt `window_exceeded` (Alias, kein Icon,
 Suffix `exceeded`) — Semantik „Fenster-Limit überschritten" entspricht
@@ -88,13 +125,15 @@ Suffix `exceeded`) — Semantik „Fenster-Limit überschritten" entspricht
 ⚠️ **CG-B2:** `account_reachable` (Alias zu `api_reachable`, immer
 `available`, auch bei API-Ausfall — Absicht). — *Schließung:* kein Rename
 nötig, aber Kanon-Attribut-Verhalten angleichen; Entscheidung mit CG-W2.
-⚠️ **CG-B3:** command_gauge `subscription_active` mit device_class RUNNING
-statt CONNECTIVITY. — *Schließung:* dto. (MAJOR).
+⚠️ **CG-B3:** command_gauge `subscription_active` mit device_class RUNNING —
+der Kanon sieht seit 1.6.0 **keinen** device_class vor (das CONNECTIVITY-
+Rendering war irreführend, Begründung siehe Verhalten oben). —
+*Schließung:* dto. (MAJOR).
 ⚠️ **CG-B4 (domain-spezifisch, erlaubt):** `credits_below_threshold`
 (PROBLEM, ON wenn Guthaben unter API-Schwelle) — command_code Credit-Modell,
 kein go_gauge-Äquivalent. *Schließung:* entfällt.
 
-## 5. Katalog-Sensoren (Modell-Katalog)
+## 6. Katalog-Sensoren (Modell-Katalog)
 
 Grundsatz: **EIN Sensor trägt den kompletten Katalog als dynamische
 JSON-Attribute** — neue Modelle erscheinen ohne neue Entities.
@@ -121,7 +160,7 @@ Kanon-Attribute spiegeln.
 liefert keine Pricing-Daten. — *Schließung:* nur bei API-Erweiterung
 (siehe CG-C1).
 
-## 6. Credit-/Summary-Sensoren (⚠️ domain-spezifisch, command_code-only)
+## 7. Credit-/Summary-Sensoren (⚠️ domain-spezifisch, command_code-only)
 
 Das Credit-/Billing-Modell ist command_code-spezifisch und **erlaubte
 Domain-Erweiterung** — go_gauge hat kein Credit-Modell. Einheit:
@@ -141,9 +180,9 @@ Domain-Erweiterung** — go_gauge hat kein Credit-Modell. Einheit:
 *Schließung:* entfällt (API-Modell-Differenz, dokumentiert statt
 nachgebildet).
 
-## 7. Settings-Entities
+## 8. Settings-Entities
 
-### 7.1 Numbers (4) — Wertebereiche sind Kanon (go_gauge-Werte)
+### 8.1 Numbers (4) — Wertebereiche sind Kanon (go_gauge-Werte)
 
 Alle: `NumberMode.BOX`, `native_step = 1`, Unit wie angegeben, sofort
 wirksam + persistent via `persist_options` (ohne Entry-Reload).
@@ -167,7 +206,7 @@ Defaults zusätzlich als Konstanten: `DEFAULT_WARN_PERCENT=80`,
 Min/Max bewusst enger (CommandCode-API-Limiten/Fair-Use), translation_keys
 mit CG-W2-Schlüsselung umbenennen.
 
-### 7.2 Switches (2)
+### 8.2 Switches (2)
 
 | translation_key | Icon | unique_id-Suffix | EN-Name |
 |---|---|---|---|
@@ -180,7 +219,7 @@ Beide schalten den jeweiligen Auto-Refresh-Zyklus und triggern
 ⚠️ **CG-S1:** command_gauge: `auto_usage` / `auto_models` (Icon identisch).
 — *Schließung:* mit CG-W2.
 
-### 7.3 Button (1)
+### 8.3 Button (1)
 
 | translation_key | Icon | unique_id-Suffix | EN-Name |
 |---|---|---|---|
@@ -189,7 +228,7 @@ Beide schalten den jeweiligen Auto-Refresh-Zyklus und triggern
 Erzwingt sofortigen Refresh **beider** Zyklen (usage + models), unabhängig
 von den Auto-Update-Schaltern. ✅ beide Integrationen identisch.
 
-## 8. Namensschema / Wortstellung
+## 9. Namensschema / Wortstellung
 
 - **Kanon-Wortstellung (go_gauge-Stil):** Fenster-Placeholder **vorn**:
   `{window} Usage`, `{window} Reset`, `{window} Forecast`, `{window} Pace`,
@@ -207,7 +246,7 @@ von den Auto-Update-Schaltern. ✅ beide Integrationen identisch.
 ⚠️ **CG-NAME1:** command_gauge EN-Namen stellen das Fenster ans Ende:
 `Usage {window}` etc. — *Schließung:* mit CG-W2 auf `{window} <Konzept>`.
 
-## 9. Ausnahmeregelung (⚠️-Regime)
+## 10. Ausnahmeregelung (⚠️-Regime)
 
 1. Domain-begründete Divergenz ist nur gültig mit ⚠️-Eintrag **in diesem
    Kanon** (Begründung + Schließungsbedingung) — nicht durch stille
@@ -220,7 +259,7 @@ von den Auto-Update-Schaltern. ✅ beide Integrationen identisch.
    (`scripts/check_canon.py`) meldet sie als ERROR (Exit 1), registrierte
    als WARNING (⚠️, Exit 0).
 
-## 10. Offene Kanon-Punkte (gelten für beide Integrationen)
+## 11. Offene Kanon-Punkte (gelten für beide Integrationen)
 
 | ID | Punkt | Stand |
 |---|---|---|
