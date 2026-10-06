@@ -76,7 +76,17 @@ matrix/
 
 ## Status
 
-Kanon **v1.1** — abgeleitet aus `go_gauge` 1.6.0 (Master) und
-`command_gauge` 0.2.0 (Konvergenz-Ziel), Stand 2026-10-05. Neu in v1.1:
-Scope-Status-Sensor `api_status` (go_gauge 1.6.0) und `subscription_active`
-ohne device_class.
+Kanon **v1.2** — abgeleitet aus `go_gauge` 1.6.0 (Master). Neu in v1.2:
+**command_gauge 1.0.0 hat die Kanon-Konvergenz vollzogen** — `translation_keys`,
+`{window}`-Wortstellung, Icons, `usage`-Status/Attribute, `model_catalog`,
+`subscription_active` (ohne `device_class`) und die Settings-Keys sind kanonisch;
+die ehemaligen Alias-Keys (`window_*`, `warn_percent`, `auto_*`, `account_reachable`,
+`models`, `*_refresh_minutes`) sind entfallen. Die Legacy-`unique_id`-Suffixe werden
+per Entity-Registry-Migration auf die Kanon-Suffixe umgeschrieben (Historie bleibt
+erhalten). Registriert bleiben nur **API-blockierte** Abweichungen (month-Fenster,
+`api_status`, Pricing-Katalog-Sensoren/Attribute) und **domain-begründete**
+Number-Ranges. Kanon v1.1: Scope-Status-Sensor `api_status` (go_gauge 1.6.0),
+`subscription_active` ohne device_class.
+
+Checker-Ergebnis: `check_canon.py` → go_gauge **0/0** (Referenz grün),
+command_gauge **0 Fehler / 9 registrierte Warnungen**.

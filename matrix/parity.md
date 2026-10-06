@@ -1,16 +1,15 @@
 # Gauge Parity-Matrix (Pflegedatei)
 
-Stand: 2026-10-05 · Kanon **v1.1** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
-Vorgänger: `docs/parity-with-go-gauge.md` in ha-command-gauge (wird von dieser
-Datei abgelöst, sobald die Submodule-Einbindung steht).
+Stand: 2026-10-06 · Kanon **v1.2** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
+Konvergenz-Ziel: command_gauge **1.0.0** (Kanon-Konvergenz vollzogen).
 
 **Legende:** ✅ = Kanon erfüllt · ⚠️ = registrierte Abweichung (mit Kanon-ID und
 Schließungsbedingung) · ❌ = unregistrierte Abweichung = Fehler · — = existiert
 nicht (domain-seitig begründet).
 
-Checker-Ergebnisse (Stand 2026-10-05):
+Checker-Ergebnisse (Stand 2026-10-06):
 `check_canon.py` → go_gauge: **0 Fehler / 0 Warnungen** (Referenz = grün) ·
-command_gauge: **0 Fehler / 54 registrierte Warnungen** (Exit 0).
+command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
 
 ## Device-Topologie
 
@@ -26,13 +25,13 @@ command_gauge: **0 Fehler / 54 registrierte Warnungen** (Exit 0).
 
 | Entity (Kanon-Key) | go_gauge | command_gauge | Status |
 |---|---|---|---|
-| `usage` (% · MEASUREMENT · suffix `percent`) | ✅ | ⚠️ `window_usage`, Suffix `usage`, keine Status-Attribute | ⚠️ CG-W2/W3 |
-| `reset` (TIMESTAMP) | ✅ | ✅ (Alias `window_reset`) | ⚠️ CG-W2 (nur Key) |
-| `forecast` (%, MEASUREMENT) | ✅ | ✅ (Alias `window_forecast`) | ⚠️ CG-W2 |
-| `pace` (Ampel + Attribute) | ✅ | ✅ vollständig (Alias `window_pace`) | ⚠️ CG-W2 |
-| `remaining` (%) | ✅ | ✅ (Alias `window_remaining`) | ⚠️ CG-W2 |
-| `time_to_reset` (DURATION, h) | ✅ | ✅ (Alias `window_time_to_reset`) | ⚠️ CG-W2 |
-| `burn_rate` (%/h) | ✅ | ✅ (Alias `window_burn_rate`) | ⚠️ CG-W2 |
+| `usage` (% · MEASUREMENT · suffix `percent` · Status/Attribute) | ✅ | ✅ (`None` bei no_subscription/error, shield-off-Icon, Attribute) | ✅ |
+| `reset` (TIMESTAMP) | ✅ | ✅ | ✅ |
+| `forecast` (%, MEASUREMENT) | ✅ | ✅ | ✅ |
+| `pace` (Ampel + Attribute) | ✅ | ✅ | ✅ |
+| `remaining` (%) | ✅ | ✅ | ✅ |
+| `time_to_reset` (DURATION, h) | ✅ | ✅ | ✅ |
+| `burn_rate` (%/h) | ✅ | ✅ | ✅ |
 | Fenster | ✅ 5h/week/month | ⚠️ 5h/week | ⚠️ CG-W1 (API) |
 
 ## Scope-Status (je Scope)
@@ -45,7 +44,8 @@ command_gauge: **0 Fehler / 54 registrierte Warnungen** (Exit 0).
 
 | Entity | go_gauge | command_gauge | Status |
 |---|---|---|---|
-| `model_catalog` (Kanon-Attribute voll) | ✅ | ⚠️ `models`, nur `catalog_json`/`models_updated_at` | ⚠️ CG-C1 (API: kein Pricing) |
+| `model_catalog` (Key/Name/Suffix kanonisch) | ✅ | ✅ (Attribute `count`/`catalog_json`/`models_updated_at`) | ✅ |
+| `model_catalog` Pricing-Attribute | ✅ | ⚠️ `live_count`/`free_models`/`cheapest_model`/`cheapest_overall`/`ranking_by_cost` fehlen | ⚠️ CG-C1 (API: kein Pricing) |
 | `live_models_count` | ✅ | — | ⚠️ CG-C2 (API-blockiert) |
 | `cheapest_model` | ✅ | — | ⚠️ CG-C2 |
 | `free_models` | ✅ | — | ⚠️ CG-C2 |
@@ -57,31 +57,31 @@ command_gauge: **0 Fehler / 54 registrierte Warnungen** (Exit 0).
 
 | Entity | go_gauge | command_gauge | Status |
 |---|---|---|---|
-| `rate_limited` (PROBLEM, je Fenster) | ✅ | ⚠️ `window_exceeded`, kein Icon, Suffix `exceeded` | ⚠️ CG-B1 |
-| `subscription_active` (kein device_class) | ✅ | ⚠️ RUNNING, keine Attribute, kein Icon | ⚠️ CG-B3 |
-| `api_reachable` (konto-weit) | ✅ (Catalog Owner) | ⚠️ `account_reachable`, immer verfügbar | ⚠️ CG-B2 |
+| `rate_limited` (PROBLEM, je Fenster) | ✅ | ✅ | ✅ |
+| `subscription_active` (kein device_class) | ✅ | ✅ | ✅ |
+| `api_reachable` (konto-weit) | ✅ (Catalog Owner) | ✅ (`is_on` = `last_update_success` + `fetched_at`; bewusst immer `available`) | ✅ |
 | `credits_below_threshold` | — | ✅ (domain-erlaubt) | ✅ domain CG-B4 |
 
 ## Settings
 
 | Entity | go_gauge (Kanon) | command_gauge | Status |
 |---|---|---|---|
-| `warning_threshold` (% · 1–100 · `alert-octagon-outline`) | ✅ | ⚠️ `warn_percent`, Icon `mdi:alert` | ⚠️ CG-N1 |
-| `pace_red_limit` (% · **1–300** · `alert-decagram-outline`) | ✅ | ⚠️ `pace_red_percent`, **1–1000**, Icon abweichend | ⚠️ CG-N1 |
-| `usage_refresh_min` (min · **1–1440** · `timer-outline`) | ✅ | ⚠️ `usage_refresh_minutes`, **5–1440**, Icon abweichend | ⚠️ CG-N1 |
-| `models_refresh_min` (min · **1–1440** · `timer-outline`) | ✅ | ⚠️ `models_refresh_minutes`, **60–1440**, Icon abweichend | ⚠️ CG-N1 |
-| `auto_update_usage` / `auto_update_models` | ✅ | ⚠️ `auto_usage` / `auto_models` (Icons ✅) | ⚠️ CG-S1 |
+| `warning_threshold` (% · 1–100 · `alert-octagon-outline`) | ✅ | ✅ | ✅ |
+| `pace_red_limit` (% · `alert-decagram-outline`) | ✅ 1–300 | ⚠️ 1–1000 (domain: Forecast >300) | ⚠️ domain |
+| `usage_refresh_min` (min · `timer-outline`) | ✅ 1–1440 | ⚠️ 5–1440 (Fair-Use) | ⚠️ domain |
+| `models_refresh_min` (min · `timer-outline`) | ✅ 1–1440 | ⚠️ 60–1440 (Fair-Use) | ⚠️ domain |
+| `auto_update_usage` / `auto_update_models` | ✅ | ✅ | ✅ |
 | `refresh` (erzwingt beide Zyklen) | ✅ | ✅ | ✅ |
 
 ## Namen / Wortstellung
 
 | Aspekt | go_gauge | command_gauge | Status |
 |---|---|---|---|
-| EN-Master, Fenster-Placeholder **vorn** (`{window} Usage`) | ✅ | ⚠️ `Usage {window}` (hinten) | ⚠️ CG-NAME1 |
+| EN-Master, Fenster-Placeholder **vorn** (`{window} Usage`) | ✅ | ✅ | ✅ |
 | `strings.json` + `translations/{en,de}.json` vollständig | ✅ | ✅ | ✅ |
-| `Burn-Rate`-Schreibweise EN | ✅ | ⚠️ `Burn rate` | ⚠️ CG-NAME1 |
+| `Burn-Rate`-Schreibweise EN | ✅ | ✅ | ✅ |
 
-## Verfahren (unverändert aus dem Paritäts-Konzept übernomommen)
+## Verfahren (unverändert)
 
 1. **Spiegelungs-Pflicht:** Jede Pattern-/Feature-Änderung an einer Integration
    wird im selben Arbeitsgang am Schwester-Repo geprüft und — soweit die API
@@ -95,8 +95,9 @@ command_gauge: **0 Fehler / 54 registrierte Warnungen** (Exit 0).
 4. **Naming parallel halten:** Coordinator-Attribute (`warn_percent`,
    `pace_red_percent`, `usage_minutes`, `models_minutes`, `auto_usage`,
    `auto_models`) sind bewusst identisch und bleiben es.
-5. **Entity-Breaking = MAJOR** in dem Repo, in dem es passiert; `unique_id`
-   nie ändern (Renames per Entity-Registry-Migration).
+5. **Entity-Breaking = MAJOR** in dem Repo, in dem es passiert. command_gauge
+   1.0.0 hat die Kanon-Keys übernommen; die Legacy-`unique_id`-Suffixe werden
+   per Entity-Registry-Migration in-place umgeschrieben (Historie bleibt).
 6. **Checker-Pflicht:** `scripts/check_canon.py` muss vor jedem Release gegen
    beide Repos grün laufen (Master: 0/0; Konvergenz-Ziel: 0 Fehler, nur
    registrierte ⚠️).
@@ -106,19 +107,17 @@ command_gauge: **0 Fehler / 54 registrierte Warnungen** (Exit 0).
 | ID | Thema | Schließungsbedingung (Kurz) |
 |---|---|---|
 | CG-W1 | month-Fenster fehlt | CommandCode-API ergänzt Monatsfenster |
-| CG-W2 | `window_*`-/`warn_percent`-Keys | Rename auf Kanon-Keys, MAJOR + Registry-Migration |
-| CG-W3 | usage: kein no_subscription-Schutz | Abo-Status-Handling angleichen |
-| CG-NAME1 | Wortstellung `Usage {window}` | mit CG-W2 |
-| CG-B1 | `window_exceeded` statt `rate_limited` | mit CG-W2 |
-| CG-B2 | `account_reachable` | Entscheidung mit CG-W2 |
-| CG-B3 | subscription_active: RUNNING, keine Attribute | mit CG-W2 (Kanon: kein device_class) |
-| CG-B4 | `credits_below_threshold` | domain-erlaubt, entfällt |
-| CG-B5 | `api_status` fehlt | nur bei CommandCode-API-Erweiterung |
-| CG-C1 | Katalog-Attribute unvollständig | CommandCode-API liefert Pricing |
+| CG-B5 | `api_status` fehlt | kein Scope-Status-Modell in der CommandCode-API |
+| CG-C1 | Katalog-Pricing-Attribute fehlen | CommandCode-API liefert Pricing |
 | CG-C2 | live/cheapest/free-Modelle fehlen | nur bei API-Erweiterung |
-| CG-N1 | Number-Keys/Icons/Ranges | Angleichung mit CG-W2 prüfen |
-| CG-S1 | Switch-Keys `auto_*` | mit CG-W2 |
+| CG-B4 | `credits_below_threshold` | domain-erlaubt, entfällt |
 | CG-D1 | kein Account-Device/Catalog-Owner | entfällt (kein Duplikat-Problem) |
+| — | Number-Ranges pace/usage/models | domain-begründet, entfällt |
+
+**In v1.2 geschlossen (command_gauge 1.0.0):** CG-W2, CG-W3, CG-NAME1, CG-B1,
+CG-B2, CG-B3, CG-N1 (Keys/Icons), CG-S1 — plus die vier Legacy-`unique_id`-Suffixe
+(`usage`→`percent`, `exceeded`→`limited`, `models`→`model_catalog`,
+`account_reachable`→`api_reachable`).
 
 ## Offene Punkte (beide Repos)
 

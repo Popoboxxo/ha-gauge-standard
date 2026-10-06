@@ -1,9 +1,18 @@
-# Gauge Entity Canon v1.1
+# Gauge Entity Canon v1.2
 
 Verbindliche Spezifikation des Entity-Modells aller Gauge-Integrationen
 (`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 1.6.0**.
 Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 (→ Abschnitt „Ausnahmeregelung").
+
+> **Seit Kanon v1.2 (2026-10-06):** `command_gauge` **1.0.0** hat die Konvergenz
+> vollzogen — `translation_keys`, `{window}`-Wortstellung, Icons, `usage`-Status/
+> Attribute, `model_catalog`, `subscription_active` (ohne `device_class`) und die
+> Settings-Keys sind kanonisch; die Legacy-Alias-Keys sind entfallen und die
+> Legacy-`unique_id`-Suffixe wurden per Entity-Registry-Migration auf die
+> Kanon-Suffixe umgeschrieben (Historie bleibt erhalten). Registriert sind nur
+> noch **API-blockierte** (month-Fenster, `api_status`, Pricing-Katalog) und
+> **domain-begründete** (Number-Ranges) Abweichungen.
 
 Maschinenlesbare Version: `canon/entities.schema.json`
 (diese Datei ist die normative Referenz bei Widersprüchen).
@@ -62,12 +71,12 @@ account scope). Reihenfolge der Suffixe ist Kanon.
 - **Attribute Usage:** `workspace_key`, `window`, `status`, `note`,
   `resets_at_iso`.
 
-⚠️ **CG-W2 (command_gauge, translation_keys):** `window_usage`,
-`window_reset`, `window_forecast`, `window_pace`, `window_remaining`,
-`window_time_to_reset`, `window_burn_rate`. — *Schließung:* Umbenennung auf
-die Kanon-Keys im nächsten breaking Release (MAJOR).
-⚠️ **CG-W3 (command_gauge, usage):** kein `no_subscription`-Schutz, keine
-Attribute, unique_id-Suffix `usage` statt `percent`. — *Schließung:* dto.
+✅ **CG-W2/CG-W3 (command_gauge, geschlossen in 1.0.0):** Keys sind kanonisch
+(`usage`, `reset`, `forecast`, `pace`, `remaining`, `time_to_reset`,
+`burn_rate`); der `usage`-Sensor liefert `None` bei `no_subscription`/`error`
+(Icon `mdi:shield-off-outline`) und trägt `workspace_key`, `window`, `status`,
+`note`, `resets_at_iso`; unique_id-Suffix `percent` (per Registry-Migration,
+Historie erhalten).
 
 ## 4. Scope-Status: API Status (Sensor, je Scope)
 
@@ -119,16 +128,12 @@ device_class** (Kanon seit 1.6.0): CONNECTIVITY ließ HA den Zustand als
 „Getrennt" rendern — ein Abo ist ein Subskriptionszustand, keine Verbindung;
 Verbindung ist allein Sache von `api_reachable`.
 
-⚠️ **CG-B1:** command_gauge nutzt `window_exceeded` (Alias, kein Icon,
-Suffix `exceeded`) — Semantik „Fenster-Limit überschritten" entspricht
-`rate_limited`. — *Schließung:* Umbenennung mit CG-W2.
-⚠️ **CG-B2:** `account_reachable` (Alias zu `api_reachable`, immer
-`available`, auch bei API-Ausfall — Absicht). — *Schließung:* kein Rename
-nötig, aber Kanon-Attribut-Verhalten angleichen; Entscheidung mit CG-W2.
-⚠️ **CG-B3:** command_gauge `subscription_active` mit device_class RUNNING —
-der Kanon sieht seit 1.6.0 **keinen** device_class vor (das CONNECTIVITY-
-Rendering war irreführend, Begründung siehe Verhalten oben). —
-*Schließung:* dto. (MAJOR).
+✅ **CG-B1/B2/B3 (command_gauge, geschlossen in 1.0.0):** `rate_limited` ist
+kanonisch (Icon `mdi:block-helper`, Suffix `limited`, `unavailable` statt OFF
+ohne Abo); `api_reachable` ist kanonisch benannt (`is_on` = `last_update_success`
++ `fetched_at`, bewusst weiterhin immer `available` — Konto-Sensor); der
+`subscription_active`-Sensor hat **keinen** `device_class` mehr und trägt
+`mdi:shield-check-outline` plus `workspace_key`/`note`.
 ⚠️ **CG-B4 (domain-spezifisch, erlaubt):** `credits_below_threshold`
 (PROBLEM, ON wenn Guthaben unter API-Schwelle) — command_code Credit-Modell,
 kein go_gauge-Äquivalent. *Schließung:* entfällt.
@@ -151,10 +156,12 @@ Attribute `model_catalog` (Kanon): `models_updated_at`, `count`,
 (kompletter Katalog als JSON-String).
 Attribute `cheapest_model`: `cheapest_overall`, `ratio_usd_per_1m`.
 
-⚠️ **CG-C1:** command_gauge: `models` (Alias zu `model_catalog`) mit nur
-`catalog_json`, `models_updated_at`. — *Schließung:* CommandCode
-`/provider/v1/models` liefert Pricing → `build_models_block` erweitern,
-Kanon-Attribute spiegeln.
+⚠️ **CG-C1:** command_gauge `model_catalog` ist kanonisch benannt und trägt
+`count`, `catalog_json`, `models_updated_at`; die Pricing-Attribute
+(`live_count`, `free_models`, `cheapest_model`, `cheapest_overall`,
+`ranking_by_cost`) fehlen, weil CommandCode nur id/name/context_length liefert.
+— *Schließung:* CommandCode `/provider/v1/models` liefert Pricing →
+`build_models_block` erweitern, Kanon-Attribute spiegeln.
 ⚠️ **CG-C2 (API-blockiert):** `live_models_count`, `cheapest_model`,
 `free_models` existieren in command_gauge nicht — die CommandCode-API
 liefert keine Pricing-Daten. — *Schließung:* nur bei API-Erweiterung
@@ -199,12 +206,13 @@ Defaults zusätzlich als Konstanten: `DEFAULT_WARN_PERCENT=80`,
 `DEFAULT_PACE_RED_PERCENT=100`, `DEFAULT_USAGE_REFRESH_MINUTES=10`,
 `DEFAULT_MODELS_REFRESH_MINUTES=60`.
 
-⚠️ **CG-N1 (domain-begründet):** command_gauge nutzt
-`usage_refresh_minutes` (Min **5**), `models_refresh_minutes` (Min **60**),
-`warn_percent`, `pace_red_percent` (Max **1000**), Icons
-`mdi:timer-refresh(-outline)`, `mdi:alert`, `mdi:alert-circle-outline`.
-Min/Max bewusst enger (CommandCode-API-Limiten/Fair-Use), translation_keys
-mit CG-W2-Schlüsselung umbenennen.
+✅ **CG-N1 (Keys/Icons geschlossen in 1.0.0):** command_gauge nutzt jetzt die
+Kanon-Keys `warning_threshold`, `pace_red_limit`, `usage_refresh_min`,
+`models_refresh_min` mit den Kanon-Icons (`mdi:alert-octagon-outline`,
+`mdi:alert-decagram-outline`, `mdi:timer-outline`). ⚠️ **domain-begründete
+Ranges bleiben:** `pace_red_limit` 1–**1000** (Forecast darf >300 projizieren),
+`usage_refresh_min` Min **5** und `models_refresh_min` Min **60**
+(CommandCode-API-Fair-Use). *Schließung:* entfällt (domain-begründet).
 
 ### 8.2 Switches (2)
 
@@ -216,8 +224,8 @@ mit CG-W2-Schlüsselung umbenennen.
 Beide schalten den jeweiligen Auto-Refresh-Zyklus und triggern
 `recalculate_interval()`; persistiert via `persist_options`.
 
-⚠️ **CG-S1:** command_gauge: `auto_usage` / `auto_models` (Icon identisch).
-— *Schließung:* mit CG-W2.
+✅ **CG-S1 (geschlossen in 1.0.0):** command_gauge nutzt `auto_update_usage` /
+`auto_update_models` (Icons identisch, unique_id-Suffix kanonisch).
 
 ### 8.3 Button (1)
 
@@ -243,8 +251,8 @@ von den Auto-Update-Schaltern. ✅ beide Integrationen identisch.
 - Kein hartcodiertes `_attr_name`/`name`-Literal; Anzeigename ausschließlich
   über `_attr_translation_key` (eiserne Regel).
 
-⚠️ **CG-NAME1:** command_gauge EN-Namen stellen das Fenster ans Ende:
-`Usage {window}` etc. — *Schließung:* mit CG-W2 auf `{window} <Konzept>`.
+✅ **CG-NAME1 (geschlossen in 1.0.0):** command_gauge stellt das Fenster jetzt
+vorn (`{window} Usage`, `{window} Burn-Rate`, `{window} rate-limited`, …).
 
 ## 10. Ausnahmeregelung (⚠️-Regime)
 
