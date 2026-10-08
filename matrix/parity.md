@@ -1,15 +1,15 @@
 # Gauge Parity-Matrix (Pflegedatei)
 
-Stand: 2026-10-06 · Kanon **v1.2** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
-Konvergenz-Ziel: command_gauge **1.0.0** (Kanon-Konvergenz vollzogen).
+Stand: 2026-10-08 · Kanon **v1.3** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
+Konvergenz-Ziel: command_gauge **1.1.0** (Kanon-Konvergenz + synthetisches Monatsfenster).
 
 **Legende:** ✅ = Kanon erfüllt · ⚠️ = registrierte Abweichung (mit Kanon-ID und
 Schließungsbedingung) · ❌ = unregistrierte Abweichung = Fehler · — = existiert
 nicht (domain-seitig begründet).
 
-Checker-Ergebnisse (Stand 2026-10-06):
+Checker-Ergebnisse (Stand 2026-10-08):
 `check_canon.py` → go_gauge: **0 Fehler / 0 Warnungen** (Referenz = grün) ·
-command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
+command_gauge: **0 Fehler / 8 registrierte Warnungen** (Exit 0).
 
 ## Device-Topologie
 
@@ -32,7 +32,7 @@ command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
 | `remaining` (%) | ✅ | ✅ | ✅ |
 | `time_to_reset` (DURATION, h) | ✅ | ✅ | ✅ |
 | `burn_rate` (%/h) | ✅ | ✅ | ✅ |
-| Fenster | ✅ 5h/week/month | ⚠️ 5h/week | ⚠️ CG-W1 (API) |
+| Fenster | ✅ 5h/week/month (API) | ✅ 5h/week (API) + month **synthetisch** ⚠️ CG-M1 | ✅ |
 
 ## Scope-Status (je Scope)
 
@@ -106,13 +106,17 @@ command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
 
 | ID | Thema | Schließungsbedingung (Kurz) |
 |---|---|---|
-| CG-W1 | month-Fenster fehlt | CommandCode-API ergänzt Monatsfenster |
+| CG-M1 | month-Fenster **synthetisch** (kein API-Fenster) | entfällt (dokumentiert); bei echtem API-Monatsfenster Synthese entfernen |
 | CG-B5 | `api_status` fehlt | kein Scope-Status-Modell in der CommandCode-API |
 | CG-C1 | Katalog-Pricing-Attribute fehlen | CommandCode-API liefert Pricing |
 | CG-C2 | live/cheapest/free-Modelle fehlen | nur bei API-Erweiterung |
 | CG-B4 | `credits_below_threshold` | domain-erlaubt, entfällt |
 | CG-D1 | kein Account-Device/Catalog-Owner | entfällt (kein Duplikat-Problem) |
 | — | Number-Ranges pace/usage/models | domain-begründet, entfällt |
+
+**In v1.3 (command_gauge 1.1.0):** `month`-Fenster synthetisch ergänzt
+(7er-Satz + `rate_limited`); die frühere `windows`-Abweichung entfällt, da die
+Fenster-Reihenfolge jetzt kanonisch ist.
 
 **In v1.2 geschlossen (command_gauge 1.0.0):** CG-W2, CG-W3, CG-NAME1, CG-B1,
 CG-B2, CG-B3, CG-N1 (Keys/Icons), CG-S1 — plus die vier Legacy-`unique_id`-Suffixe

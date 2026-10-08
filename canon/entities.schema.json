@@ -1,6 +1,6 @@
 {
-  "canon_version": "1.2.0",
-  "stand": "2026-10-06",
+  "canon_version": "1.3.0",
+  "stand": "2026-10-08",
   "master": {
     "repo": "Popoboxxo/ha-go-gauge",
     "domain": "go_gauge",
@@ -9,7 +9,7 @@
   "convergence_target": {
     "repo": "Popoboxxo/ha-command-gauge",
     "domain": "command_gauge",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "naming": {
     "window_position": "prefix",
@@ -345,7 +345,7 @@
   },
   "known_deviations": {
     "command_gauge": [
-      {"id": "windows", "aspect": "windows", "severity": "warning", "actual": ["5h", "week"], "reason": "CommandCode API liefert nur 5h/week (WINDOW_API_KEYS)", "closing": "API ergaenzt month-Fenster -> WINDOW_LABELS/WINDOW_SECONDS/WINDOW_API_KEYS erweitern (Sensor-Satz ist dynamisch)"},
+      {"id": "month", "aspect": "window_derivation", "severity": "warning", "actual": "synthetic", "reason": "CommandCode hat kein rollierendes Monatsfenster: windowLimits liefert nur fiveHour/weekly; das 'Monthly Limit' ist der Credit-Grant pro Billing-Zyklus. Das Kanon-month-Fenster wird synthetisch abgeleitet: cap=credits.monthly_credits, used=summary.total_cost (seit subscription.period_start), reset=subscription.period_end. used ist Gesamt-Spend -> mit purchased/free-Credits kann percent den Grant uebersteigen.", "closing": "entfaellt (dokumentierte synthetische Ableitung); bei echtem API-Monatsfenster: WINDOW_API_KEYS erweitern und Synthese entfernen"},
       {"id": "api_status", "aspect": "presence", "severity": "warning", "actual": null, "reason": "CommandCode-API liefert Abo-/API-Status nur konto-weit (subscription.status), kein Scope-Status-Modell mit no_subscription/rate_limited", "closing": "nur bei API-Erweiterung (vgl. CG-W3, CG-C2)"},
       {"id": "model_catalog", "aspect": "attributes", "severity": "warning", "actual": ["count", "catalog_json", "models_updated_at"], "reason": "CommandCode /provider/v1/models liefert nur id/name/context_length (kein Pricing/live/free)", "closing": "API liefert Pricing -> build_models_block erweitern, Kanon-Attribute live_count/free_models/cheapest_model/cheapest_overall/ranking_by_cost spiegeln"},
       {"id": "live_models_count", "aspect": "presence", "severity": "warning", "actual": null, "reason": "API-blockiert: kein Pricing/Live-Status in CommandCode-API", "closing": "nur bei API-Erweiterung"},

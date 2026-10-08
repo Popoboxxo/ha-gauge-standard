@@ -1,9 +1,15 @@
-# Gauge Entity Canon v1.2
+# Gauge Entity Canon v1.3
 
 Verbindliche Spezifikation des Entity-Modells aller Gauge-Integrationen
 (`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 1.6.0**.
 Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 (→ Abschnitt „Ausnahmeregelung").
+
+> **Neu in Kanon v1.3 (2026-10-08):** command_gauge **1.1.0** füllt die
+> `month`-Fensterdimension mit dem vollen 7er-Satz — aber **synthetisch** aus dem
+> Monats-Credit-Grant abgeleitet, weil die CommandCode-API kein rollierendes
+> Monatsfenster liefert (⚠️ CG-M1, siehe §2). Die Fenster-Reihenfolge ist damit
+> kanonisch; die frühere `windows`-Abweichung entfällt.
 
 > **Seit Kanon v1.2 (2026-10-06):** `command_gauge` **1.0.0** hat die Konvergenz
 > vollzogen — `translation_keys`, `{window}`-Wortstellung, Icons, `usage`-Status/
@@ -11,8 +17,8 @@ Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 > Settings-Keys sind kanonisch; die Legacy-Alias-Keys sind entfallen und die
 > Legacy-`unique_id`-Suffixe wurden per Entity-Registry-Migration auf die
 > Kanon-Suffixe umgeschrieben (Historie bleibt erhalten). Registriert sind nur
-> noch **API-blockierte** (month-Fenster, `api_status`, Pricing-Katalog) und
-> **domain-begründete** (Number-Ranges) Abweichungen.
+> noch **API-blockierte** (`api_status`, Pricing-Katalog) und **domain-begründete**
+> (Number-Ranges) Abweichungen.
 
 Maschinenlesbare Version: `canon/entities.schema.json`
 (diese Datei ist die normative Referenz bei Widersprüchen).
@@ -34,11 +40,28 @@ Maschinenlesbare Version: `canon/entities.schema.json`
 |---|---|---|
 | `5h` | `5h rolling` | 18 000 s |
 | `week` | `Weekly` | 604 800 s |
-| `month` | `Monthly` | 2 592 000 s (30-Tage-Näherung) ⚠️ CG-W1 |
+| `month` | `Monthly` | 2 592 000 s (30-Tage-Näherung) ⚠️ CG-M1 (synthetisch) |
 
 Fenster-Labels werden als `{window}`-Placeholder in `translation_placeholders`
 gesetzt; die Fenster-Entities werden dynamisch aus der Fenster-Liste erzeugt
 (deshalb skaliert der 7er-Satz automatisch auf neue Fenster).
+
+⚠️ **CG-M1 (command_gauge, synthetisch):** Die CommandCode-API hat **kein**
+rollierendes Monatsfenster — `windowLimits` liefert nur `fiveHour`/`weekly`;
+das in der UI gezeigte „Monthly Limit" ist der **Credit-Grant pro
+Billing-Zyklus**. Das Kanon-`month`-Fenster wird in command_gauge daher
+**synthetisch abgeleitet**:
+
+- `cap` = `credits.monthly_credits` (Monats-Grant, USD)
+- `used` = `summary.total_cost` (Spend seit `subscription.period_start`)
+- `reset` = `subscription.period_end` (Billing-Zyklus)
+
+Bei fehlendem Grant/Spend/Periodenstart liefert die Ableitung `None` (nie eine
+Fake-Zahl). `used` ist **Gesamt-Spend** → mit purchased/free-Credits kann
+`percent` den Grant übersteigen (dokumentierte Näherung). go_gauge liest `month`
+dagegen **direkt** aus der OpenCode-API (`usage.monthly`). *Schließung:*
+entfällt (dokumentierte synthetische Ableitung); bei echtem API-Monatsfenster
+`WINDOW_API_KEYS` erweitern und die Synthese entfernen.
 
 ## 3. Fenster-Sensor-Satz (7er-Satz, je Fenster)
 
