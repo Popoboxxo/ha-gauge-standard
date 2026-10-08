@@ -76,17 +76,26 @@ matrix/
 
 ## Status
 
-Kanon **v1.2** — abgeleitet aus `go_gauge` 1.6.0 (Master). Neu in v1.2:
-**command_gauge 1.0.0 hat die Kanon-Konvergenz vollzogen** — `translation_keys`,
-`{window}`-Wortstellung, Icons, `usage`-Status/Attribute, `model_catalog`,
-`subscription_active` (ohne `device_class`) und die Settings-Keys sind kanonisch;
-die ehemaligen Alias-Keys (`window_*`, `warn_percent`, `auto_*`, `account_reachable`,
-`models`, `*_refresh_minutes`) sind entfallen. Die Legacy-`unique_id`-Suffixe werden
-per Entity-Registry-Migration auf die Kanon-Suffixe umgeschrieben (Historie bleibt
-erhalten). Registriert bleiben nur **API-blockierte** Abweichungen (month-Fenster,
-`api_status`, Pricing-Katalog-Sensoren/Attribute) und **domain-begründete**
-Number-Ranges. Kanon v1.1: Scope-Status-Sensor `api_status` (go_gauge 1.6.0),
-`subscription_active` ohne device_class.
+Kanon **v1.3** — abgeleitet aus `go_gauge` 1.6.0 (Master). Neu in v1.3:
+**command_gauge 1.1.0** ergänzt das `month`-Fenster mit dem vollen 7er-Satz
+(+ `rate_limited`) — **synthetisch** aus dem Monats-Credit-Grant abgeleitet
+(`cap=monthly_credits`, `used=summary.total_cost`, `reset=period_end`), weil die
+CommandCode-API kein rollierendes Monatsfenster liefert (`windowLimits` nur
+`fiveHour`/`weekly`). Die Fenster-Reihenfolge ist damit kanonisch; die frühere
+`windows`-Abweichung entfällt, die synthetische Ableitung ist als ⚠️ CG-M1
+registriert (siehe `canon/entities.md` §2).
+
+Kanon v1.2: **command_gauge 1.0.0** vollzog die Kanon-Konvergenz —
+`translation_keys`, `{window}`-Wortstellung, Icons, `usage`-Status/Attribute,
+`model_catalog`, `subscription_active` (ohne `device_class`) und Settings-Keys
+sind kanonisch; Alias-Keys entfielen, Legacy-`unique_id`-Suffixe wurden per
+Entity-Registry-Migration umgeschrieben (Historie bleibt). Kanon v1.1:
+Scope-Status-Sensor `api_status` (go_gauge 1.6.0), `subscription_active` ohne
+device_class.
+
+Registriert bleiben nur **API-blockierte** Abweichungen (`api_status`,
+Pricing-Katalog-Sensoren/Attribute), die **synthetische** month-Ableitung (CG-M1)
+und **domain-begründete** Number-Ranges.
 
 Checker-Ergebnis: `check_canon.py` → go_gauge **0/0** (Referenz grün),
-command_gauge **0 Fehler / 9 registrierte Warnungen**.
+command_gauge **0 Fehler / 8 registrierte Warnungen**.
