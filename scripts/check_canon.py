@@ -11,8 +11,10 @@ verifies them against canon/entities.schema.json:
   - attribute names of extra_state_attributes present
   - icon / unit / device_class / state_class consistency
   - unique_id suffix token consistency
-  - settings_ranges (min/max of the four Number entities)
-  - window set (WINDOW_LABELS in const.py)
+  - settings_ranges (min/max/default of the four Number entities)
+  - window set and window labels (WINDOW_LABELS in const.py)
+  - negative canon rules: unit/device_class/state_class must stay unset
+    where the canon declares null
   - no hardcoded _attr_name literals
 
 Deviations registered in the schema's known_deviations for the detected
@@ -59,6 +61,7 @@ class ClassInfo:
             r"(?:min_value|_minimum)\s*=\s*(\d+)")
         self.max_value = self._int_or_none(
             r"(?:max_value|_maximum)\s*=\s*(\d+)")
+        self.default_value = self._default_value()
         self.unique_suffix = self._resolve_suffix()
 
     def _literal_token(self, template: str) -> str | None:
@@ -109,6 +112,17 @@ class ClassInfo:
         m = re.search(pattern, self.body)
         return int(m.group(1)) if m else None
 
+    def _default_value(self) -> int | None:
+        m = (re.search(r"_attr_default_value\s*=\s*(\d+|[A-Z][A-Z0-9_]*)", self.body)
+             or re.search(r"def\s+_default_value\s*\([^)]*\)\s*(?:->[^:]+)?:\s*return\s+(\d+|[A-Z][A-Z0-9_]*)", self.body)
+             or re.search(r'getattr\([^,]+,\s*"[^"]*"\s*,\s*(\d+|[A-Z][A-Z0-9_]*)\s*\)', self.body))
+        if not m:
+            return None
+        raw = m.group(1)
+        if raw.isdigit():
+            return int(raw)
+        return int(self.consts[raw]) if raw in self.consts else None
+
 
 def parse_classes(source: str, consts: dict[str, str]) -> dict[str, ClassInfo]:
     classes: dict[str, ClassInfo] = {}
@@ -120,11 +134,15 @@ def parse_classes(source: str, consts: dict[str, str]) -> dict[str, ClassInfo]:
 
 
 def parse_consts(source: str) -> dict[str, str]:
-    """Literal string constants (CONF_* = \"...\") resolvable for _option refs."""
-    return {
+    """Literal string constants (CONF_* = "...") resolvable for _option refs,
+    plus numeric constants (DEFAULT_* = 42) for settings defaults."""
+    consts = {
         m.group(1): m.group(2)
         for m in re.finditer(r'^([A-Z][A-Z0-9_]*)\s*=\s*"([^"]+)"', source, re.M)
     }
+    for m in re.finditer(r"^([A-Z][A-Z0-9_]*)\s*=\s*(\d+)\s*(?:#.*)?$", source, re.M):
+        consts[m.group(1)] = m.group(2)
+    return consts
 
 
 def resolve_range(info: ClassInfo, classes: dict[str, ClassInfo],
@@ -138,6 +156,22 @@ def resolve_range(info: ClassInfo, classes: dict[str, ClassInfo],
     for base in info.bases:
         if base in classes:
             found = resolve_range(classes[base], classes, attr, seen)
+            if found is not None:
+                return found
+    return None
+
+
+def resolve_str(info: ClassInfo, classes: dict[str, ClassInfo],
+                attr: str, seen: set[str] | None = None) -> str | None:
+    """Own string attribute (unit/device_class/state_class) or inherited."""
+    seen = seen or set()
+    value = getattr(info, attr)
+    if value is not None or info.name in seen:
+        return value
+    seen.add(info.name)
+    for base in info.bases:
+        if base in classes:
+            found = resolve_str(classes[base], classes, attr, seen)
             if found is not None:
                 return found
     return None
@@ -318,6 +352,22 @@ def main() -> int:
             report(eid, "state_class",
                    f"state_class '{info.state_class}' != canon "
                    f"'{entity['state_class']}'")
+        platform_classes = classes_by_platform.get(platform, {})
+        if "unit" in entity and entity["unit"] is None:
+            actual_unit = resolve_str(info, platform_classes, "unit")
+            if actual_unit is not None:
+                report(eid, "unit",
+                       f"unit '{actual_unit}' set but canon says none")
+        if "device_class" in entity and entity["device_class"] is None:
+            actual_dc = resolve_str(info, platform_classes, "device_class")
+            if actual_dc is not None:
+                report(eid, "device_class",
+                       f"device_class '{actual_dc}' set but canon says none")
+        if "state_class" in entity and entity["state_class"] is None:
+            actual_sc = resolve_str(info, platform_classes, "state_class")
+            if actual_sc is not None:
+                report(eid, "state_class",
+                       f"state_class '{actual_sc}' set but canon says none")
         if entity.get("icons"):
             actual_icons = resolve_icons(info, classes_by_platform.get(platform, {}))
             missing = set(entity["icons"]) - actual_icons
@@ -353,16 +403,27 @@ def main() -> int:
             report(key, "settings_range",
                    f"range {actual_min}..{actual_max} != canon "
                    f"{spec['min']}..{spec['max']}")
+        actual_default = resolve_range(info, classes, "default_value")
+        if actual_default is not None and actual_default != spec["default"]:
+            report(key, "settings_default",
+                   f"default {actual_default} != canon {spec['default']}")
 
     # --- windows ------------------------------------------------------------
     if const_py.is_file():
         source = const_py.read_text(encoding="utf-8")
         m = re.search(r"WINDOW_LABELS\s*=\s*\{([^}]*)\}", source)
-        actual_windows = re.findall(r'"(\w+)"\s*:', m.group(1)) if m else []
+        pairs = re.findall(r'"(\w+)"\s*:\s*"([^"]*)"', m.group(1)) if m else []
+        actual_windows = [w for w, _ in pairs]
         canon_windows = schema["windows"]["order"]
         if actual_windows != canon_windows:
             report("windows", "windows",
                    f"WINDOW_LABELS {actual_windows} != canon {canon_windows}")
+        for window, label in pairs:
+            canon_label = schema["windows"]["labels"].get(window)
+            if canon_label is not None and label != canon_label:
+                report("windows", "window_labels",
+                       f"label for '{window}' is '{label}' != canon "
+                       f"'{canon_label}'")
 
     # --- unknown translation keys (unregistered divergence) ---------------
     canon_keys = {e["translation_key"] for e in schema["entities"]}
