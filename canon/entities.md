@@ -232,9 +232,8 @@ Defaults zusätzlich als Konstanten: `DEFAULT_WARN_PERCENT=80`,
 ✅ **CG-N1 (Keys/Icons geschlossen in 1.0.0):** command_gauge nutzt jetzt die
 Kanon-Keys `warning_threshold`, `pace_red_limit`, `usage_refresh_min`,
 `models_refresh_min` mit den Kanon-Icons (`mdi:alert-octagon-outline`,
-`mdi:alert-decagram-outline`, `mdi:timer-outline`). ⚠️ **domain-begründete
-Ranges bleiben:** `pace_red_limit` 1–**1000** (Forecast darf >300 projizieren),
-`usage_refresh_min` Min **5** und `models_refresh_min` Min **60**
+`mdi:alert-decagram-outline`, `mdi:timer-outline`). ⚠️ **domain-begründete Ranges bleiben:** `pace_red_limit` 1–**1000** ⚠️ CG-N2 (Forecast darf >300 projizieren),
+`usage_refresh_min` Min **5** ⚠️ CG-N3 und `models_refresh_min` Min **60** ⚠️ CG-N4
 (CommandCode-API-Fair-Use). *Schließung:* entfällt (domain-begründet).
 
 ### 8.2 Switches (2)

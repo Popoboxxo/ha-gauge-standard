@@ -424,6 +424,14 @@ def main() -> int:
                 report("windows", "window_labels",
                        f"label for '{window}' is '{label}' != canon "
                        f"'{canon_label}'")
+        m_keys = re.search(r"WINDOW_API_KEYS\s*=\s*\{([^}]*)\}", source)
+        if m_keys:
+            api_windows = set(re.findall(r'"(\w+)"\s*:', m_keys.group(1)))
+            for window in canon_windows:
+                if window not in api_windows:
+                    report(window, "window_derivation",
+                           f"window '{window}' has no API key "
+                           f"(synthetic derivation)")
 
     # --- unknown translation keys (unregistered divergence) ---------------
     canon_keys = {e["translation_key"] for e in schema["entities"]}
