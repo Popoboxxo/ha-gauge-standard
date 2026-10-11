@@ -9,7 +9,7 @@ nicht (domain-seitig begründet).
 
 Checker-Ergebnisse (Stand 2026-10-08):
 `check_canon.py` → go_gauge: **0 Fehler / 0 Warnungen** (Referenz = grün) ·
-command_gauge: **0 Fehler / 8 registrierte Warnungen** (Exit 0).
+command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
 
 ## Device-Topologie
 
@@ -67,9 +67,9 @@ command_gauge: **0 Fehler / 8 registrierte Warnungen** (Exit 0).
 | Entity | go_gauge (Kanon) | command_gauge | Status |
 |---|---|---|---|
 | `warning_threshold` (% · 1–100 · `alert-octagon-outline`) | ✅ | ✅ | ✅ |
-| `pace_red_limit` (% · `alert-decagram-outline`) | ✅ 1–300 | ⚠️ 1–1000 (domain: Forecast >300) | ⚠️ domain |
-| `usage_refresh_min` (min · `timer-outline`) | ✅ 1–1440 | ⚠️ 5–1440 (Fair-Use) | ⚠️ domain |
-| `models_refresh_min` (min · `timer-outline`) | ✅ 1–1440 | ⚠️ 60–1440 (Fair-Use) | ⚠️ domain |
+| `pace_red_limit` (% · `alert-decagram-outline`) | ✅ 1–300 | ⚠️ 1–1000 (domain: Forecast >300) | ⚠️ CG-N2 |
+| `usage_refresh_min` (min · `timer-outline`) | ✅ 1–1440 | ⚠️ 5–1440 (Fair-Use) | ⚠️ CG-N3 |
+| `models_refresh_min` (min · `timer-outline`) | ✅ 1–1440 | ⚠️ 60–1440 (Fair-Use) | ⚠️ CG-N4 |
 | `auto_update_usage` / `auto_update_models` | ✅ | ✅ | ✅ |
 | `refresh` (erzwingt beide Zyklen) | ✅ | ✅ | ✅ |
 
@@ -112,7 +112,9 @@ command_gauge: **0 Fehler / 8 registrierte Warnungen** (Exit 0).
 | CG-C2 | live/cheapest/free-Modelle fehlen | nur bei API-Erweiterung |
 | CG-B4 | `credits_below_threshold` | domain-erlaubt, entfällt |
 | CG-D1 | kein Account-Device/Catalog-Owner | entfällt (kein Duplikat-Problem) |
-| — | Number-Ranges pace/usage/models | domain-begründet, entfällt |
+| CG-N2 | `pace_red_limit` Range 1–1000 | domain-begründet, entfällt |
+| CG-N3 | `usage_refresh_min` Min 5 | domain-begründet (Fair-Use), entfällt |
+| CG-N4 | `models_refresh_min` Min 60 | domain-begründet (Fair-Use), entfällt |
 
 **In v1.3 (command_gauge 1.1.0):** `month`-Fenster synthetisch ergänzt
 (7er-Satz + `rate_limited`); die frühere `windows`-Abweichung entfällt, da die

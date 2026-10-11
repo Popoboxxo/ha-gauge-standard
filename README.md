@@ -23,7 +23,7 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 
 ```
 canon/
-  entities.md          # verbindlicher Kanon v1.1 (menschenlesbar, Deutsch)
+  entities.md          # verbindlicher Kanon v1.3 (menschenlesbar, Deutsch)
   entities.schema.json # maschinenlesbare Version (prüfbar)
 scripts/
   check_canon.py       # Prüft eine Integration gegen entities.schema.json
@@ -98,4 +98,4 @@ Pricing-Katalog-Sensoren/Attribute), die **synthetische** month-Ableitung (CG-M1
 und **domain-begründete** Number-Ranges.
 
 Checker-Ergebnis: `check_canon.py` → go_gauge **0/0** (Referenz grün),
-command_gauge **0 Fehler / 8 registrierte Warnungen**.
+command_gauge **0 Fehler / 9 registrierte Warnungen**.
