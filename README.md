@@ -50,6 +50,19 @@ matrix/
 - **Exit-Codes:** `0` = OK, `1` = Fehler. Warnungen (⚠️) für im Kanon
   registrierte Abweichungen lassen den Lauf grün.
 
+## Git-Hooks (pre-commit)
+
+Repo-Hooks via [pre-commit](https://pre-commit.com/)-Framework (`.pre-commit-config.yaml`):
+JSON/Doc-Konsistenz (`scripts/check_docs.py`), Whitespace/EOF, YAML und
+Conventional-Commits (`scripts/check_commit_msg.py`). Setup per Machine:
+
+```bash
+pip install pre-commit
+pre-commit install --hook-type commit-msg
+```
+
+CI (`canon.yml`) additionally runs the Checker against both Consumer-Repos.
+
 ## Wartung
 
 1. **Kanon ändern = zuerst hier.** Änderung an `canon/entities.md` und
