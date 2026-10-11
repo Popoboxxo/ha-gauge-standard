@@ -1,0 +1,18 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+  - repo: local
+    hooks:
+      - name: canon doc/schema consistency
+        id: canon-check-docs
+        entry: scripts/check_docs.py
+        language: python
+      - name: conventional-commit
+        id: conventional-commit
+        entry: scripts/check_commit_msg.py
+        language: python
+        stages: [commit-msg]
