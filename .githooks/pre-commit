@@ -1,0 +1,11 @@
+#!/bin/sh
+# Validate canon schema + doc consistency before every commit.
+python scripts/check_docs.py || exit 1
+
+# Run the canon checker against the consumer repos when they are checked out.
+for repo in /c/Repositories/ha-go-gauge /c/Repositories/ha-command-gauge; do
+    if [ -d "$repo/custom_components" ]; then
+        python scripts/check_canon.py "$repo" || exit 1
+    fi
+done
+exit 0
