@@ -1,0 +1,26 @@
+name: canon-check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        repository: Popoboxxo/ha-go-gauge
+        directory: ha-go-gauge
+      - uses: actions/checkout@v4
+        repository: Popoboxxo/ha-command-gauge
+        directory: ha-command-gauge
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Doc/schema consistency
+        run: python3 scripts/check_docs.py
+      - name: Checker go_gauge (must be green)
+        run: python3 scripts/check_canon.py ha-go-gauge
+      - name: Checker command_gauge (registered deviations only)
+        run: python3 scripts/check_canon.py ha-command-gauge

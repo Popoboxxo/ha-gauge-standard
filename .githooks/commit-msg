@@ -1,0 +1,12 @@
+#!/bin/sh
+# Conventional Commits (merge/revert commits pass through).
+head=$(head -n 1 "$1")
+case "$head" in
+    Merge\ *|Revert\ *) exit 0 ;;
+esac
+echo "$head" | grep -Eq '^(feat|fix|docs|chore|refactor|test|perf|build|ci|revert)(\([a-z0-9-]+\))?!?: .{10,}' || {
+    echo "ERROR: commit message must follow Conventional Commits:"
+    echo "  <type>(<scope>): <subject>  (type: feat|fix|docs|chore|refactor|test|perf|build|ci|revert)"
+    exit 1
+}
+exit 0
