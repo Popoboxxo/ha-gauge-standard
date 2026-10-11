@@ -226,7 +226,8 @@ def detect_domain(repo: Path, schema: dict, forced: str | None) -> str | None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("repo", type=Path, help="integration repo root")
-    parser.add_argument("--domain", choices=("go_gauge", "command_gauge"))
+    parser.add_argument("--domain",
+                        help="force domain (default: auto-detect from manifest)")
     parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA)
     args = parser.parse_args()
 
@@ -234,6 +235,12 @@ def main() -> int:
     repo: Path = args.repo
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    known_domains = {schema["master"]["domain"],
+                     schema["convergence_target"]["domain"]}
+    if args.domain and args.domain not in known_domains:
+        print(f"ERROR: unknown domain '{args.domain}' "
+              f"(known: {sorted(known_domains)})")
+        return 1
     domain = detect_domain(repo, schema, args.domain)
     if domain is None:
         print(f"ERROR: cannot detect domain in {repo}/custom_components "
@@ -301,7 +308,6 @@ def main() -> int:
                 code_keys[platform].add(info.translation_key)
                 key_to_class[(platform, info.translation_key)] = info
 
-    aliases = schema["master"].get("aliases", {})
     extensions = {
         ext["translation_key"]
         for ext in schema.get("domain_extensions", {}).get(domain, [])
