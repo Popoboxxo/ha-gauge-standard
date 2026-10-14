@@ -1,6 +1,6 @@
 {
-  "canon_version": "1.3.0",
-  "stand": "2026-10-08",
+  "canon_version": "1.3.1",
+  "stand": "2026-10-14",
   "master": {
     "repo": "Popoboxxo/ha-go-gauge",
     "domain": "go_gauge",
@@ -9,7 +9,7 @@
   "convergence_target": {
     "repo": "Popoboxxo/ha-command-gauge",
     "domain": "command_gauge",
-    "version": "1.1.0"
+    "version": "1.1.1"
   },
   "naming": {
     "window_position": "prefix",
@@ -345,7 +345,7 @@
   },
   "known_deviations": {
     "command_gauge": [
-      {"id": "month", "aspect": "window_derivation", "cg_id": "CG-M1", "severity": "warning", "actual": "synthetic", "reason": "CommandCode hat kein rollierendes Monatsfenster: windowLimits liefert nur fiveHour/weekly; das 'Monthly Limit' ist der Credit-Grant pro Billing-Zyklus. Das Kanon-month-Fenster wird synthetisch abgeleitet: cap=credits.monthly_credits, used=summary.total_cost (seit subscription.period_start), reset=subscription.period_end. used ist Gesamt-Spend -> mit purchased/free-Credits kann percent den Grant uebersteigen.", "closing": "entfaellt (dokumentierte synthetische Ableitung); bei echtem API-Monatsfenster: WINDOW_API_KEYS erweitern und Synthese entfernen"},
+      {"id": "month", "aspect": "window_derivation", "cg_id": "CG-M1", "severity": "warning", "actual": "synthetic", "reason": "CommandCode hat kein rollierendes Monatsfenster: windowLimits liefert nur fiveHour/weekly; das 'Monthly Limit' ist der Credit-Grant pro Billing-Zyklus. Das Kanon-month-Fenster wird synthetisch abgeleitet: cap = Plan-Grant (USD) aus dem Plan-Katalog, gekeyt ueber die Subscription-planId; used = max(0, cap - credits.monthly_credits) (monthlyCredits ist ein Rest-Betrag, kein Grant); reset = subscription.period_end. Die Ableitung spiegelt die offizielle command-code-CLI. Unbekannter Plan oder fehlender Restbetrag -> None (nie eine Fake-Zahl); period_start wird nicht vorausgesetzt.", "closing": "entfaellt (dokumentierte synthetische Ableitung); bei echtem API-Monatsfenster: WINDOW_API_KEYS erweitern und Synthese entfernen"},
       {"id": "api_status", "aspect": "presence", "cg_id": "CG-B5", "severity": "warning", "actual": null, "reason": "CommandCode-API liefert Abo-/API-Status nur konto-weit (subscription.status), kein Scope-Status-Modell mit no_subscription/rate_limited", "closing": "nur bei API-Erweiterung (vgl. CG-W3, CG-C2)"},
       {"id": "model_catalog", "aspect": "attributes", "cg_id": "CG-C1", "severity": "warning", "actual": ["count", "catalog_json", "models_updated_at"], "reason": "CommandCode /provider/v1/models liefert nur id/name/context_length (kein Pricing/live/free)", "closing": "API liefert Pricing -> build_models_block erweitern, Kanon-Attribute live_count/free_models/cheapest_model/cheapest_overall/ranking_by_cost spiegeln"},
       {"id": "live_models_count", "aspect": "presence", "cg_id": "CG-C2", "severity": "warning", "actual": null, "reason": "API-blockiert: kein Pricing/Live-Status in CommandCode-API", "closing": "nur bei API-Erweiterung"},
