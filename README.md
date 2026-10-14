@@ -23,7 +23,7 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 
 ```
 canon/
-  entities.md          # verbindlicher Kanon v1.3 (menschenlesbar, Deutsch)
+  entities.md          # verbindlicher Kanon v1.3.1 (menschenlesbar, Deutsch)
   entities.schema.json # maschinenlesbare Version (prüfbar)
 scripts/
   check_canon.py       # Prüft eine Integration gegen entities.schema.json
@@ -89,14 +89,17 @@ CI (`canon.yml`) additionally runs the Checker against both Consumer-Repos.
 
 ## Status
 
-Kanon **v1.3** — abgeleitet aus `go_gauge` 1.6.0 (Master). Neu in v1.3:
-**command_gauge 1.1.0** ergänzt das `month`-Fenster mit dem vollen 7er-Satz
-(+ `rate_limited`) — **synthetisch** aus dem Monats-Credit-Grant abgeleitet
-(`cap=monthly_credits`, `used=summary.total_cost`, `reset=period_end`), weil die
-CommandCode-API kein rollierendes Monatsfenster liefert (`windowLimits` nur
-`fiveHour`/`weekly`). Die Fenster-Reihenfolge ist damit kanonisch; die frühere
-`windows`-Abweichung entfällt, die synthetische Ableitung ist als ⚠️ CG-M1
-registriert (siehe `canon/entities.md` §2).
+Kanon **v1.3.1** — abgeleitet aus `go_gauge` 1.6.0 (Master). Neu in v1.3.1:
+**command_gauge 1.1.1** korrigiert die synthetische `month`-Ableitung (⚠️ CG-M1,
+siehe `canon/entities.md` §2): `cap` ist der **Plan-Grant** aus dem Plan-Katalog
+(gekeyt über die Subscription-`planId`), `used = max(0, cap −
+credits.monthly_credits)` (die API liefert nur die *verbleibenden* Monats-Credits)
+und `reset = subscription.period_end`. Neu in v1.3: **command_gauge 1.1.0**
+ergänzt das `month`-Fenster mit dem vollen 7er-Satz (+ `rate_limited`) —
+**synthetisch**, weil die CommandCode-API kein rollierendes Monatsfenster
+liefert (`windowLimits` nur `fiveHour`/`weekly`). Die Fenster-Reihenfolge ist
+damit kanonisch; die frühere `windows`-Abweichung entfällt, die synthetische
+Ableitung ist als ⚠️ CG-M1 registriert (siehe `canon/entities.md` §2).
 
 Kanon v1.2: **command_gauge 1.0.0** vollzog die Kanon-Konvergenz —
 `translation_keys`, `{window}`-Wortstellung, Icons, `usage`-Status/Attribute,

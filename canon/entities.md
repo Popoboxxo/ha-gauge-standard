@@ -1,9 +1,17 @@
-# Gauge Entity Canon v1.3
+# Gauge Entity Canon v1.3.1
 
 Verbindliche Spezifikation des Entity-Modells aller Gauge-Integrationen
 (`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 1.6.0**.
 Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 (→ Abschnitt „Ausnahmeregelung").
+
+> **Neu in Kanon v1.3.1 (2026-10-14):** Die synthetische `month`-Ableitung
+> (⚠️ CG-M1, siehe §2) wurde korrigiert. `cap` ist der **Plan-Grant** aus dem
+> Plan-Katalog (gekeyt über die Subscription-`planId`) und
+> `used = max(0, cap − credits.monthly_credits)` — `credits.monthlyCredits` ist
+> ein **Rest-Betrag**, kein Grant (die 1.1.0-Ableitung nutzte ihn fälschlich als
+> `cap`, wodurch der Prozentwert mit schwindendem Grant stieg). Umsetzung:
+> command_gauge **1.1.1**.
 
 > **Neu in Kanon v1.3 (2026-10-08):** command_gauge **1.1.0** füllt die
 > `month`-Fensterdimension mit dem vollen 7er-Satz — aber **synthetisch** aus dem
@@ -52,16 +60,22 @@ das in der UI gezeigte „Monthly Limit" ist der **Credit-Grant pro
 Billing-Zyklus**. Das Kanon-`month`-Fenster wird in command_gauge daher
 **synthetisch abgeleitet**:
 
-- `cap` = `credits.monthly_credits` (Monats-Grant, USD)
-- `used` = `summary.total_cost` (Spend seit `subscription.period_start`)
+- `cap` = Plan-Grant (USD) aus dem Plan-Katalog, gekeyt über die
+  Subscription-`planId` (z. B. `individual-go` = $10, `individual-goat` = $70,
+  `individual-pro-v1` = $80)
+- `used` = `max(0, cap − credits.monthly_credits)` (Spend aus dem Grant;
+  `credits.monthlyCredits` ist ein **Rest-Betrag**, nicht der Grant)
 - `reset` = `subscription.period_end` (Billing-Zyklus)
 
-Bei fehlendem Grant/Spend/Periodenstart liefert die Ableitung `None` (nie eine
-Fake-Zahl). `used` ist **Gesamt-Spend** → mit purchased/free-Credits kann
-`percent` den Grant übersteigen (dokumentierte Näherung). go_gauge liest `month`
-dagegen **direkt** aus der OpenCode-API (`usage.monthly`). *Schließung:*
-entfällt (dokumentierte synthetische Ableitung); bei echtem API-Monatsfenster
-`WINDOW_API_KEYS` erweitern und die Synthese entfernen.
+Hintergrund: `/alpha/billing/credits` liefert nur die *verbleibenden*
+Monats-Credits, der Grant steht nicht in der API. Die Ableitung spiegelt die
+offizielle `command-code`-CLI (Plan-Katalog, `(grant − remaining) / grant`). Bei
+unbekanntem Plan oder fehlendem Restbetrag liefert die Ableitung `None` (nie
+eine Fake-Zahl); der Reset-Bezug ist optional (`period_start` wird von der API
+nicht garantiert). go_gauge liest `month` dagegen **direkt** aus der
+OpenCode-API (`usage.monthly`). *Schließung:* entfällt (dokumentierte
+synthetische Ableitung); bei echtem API-Monatsfenster `WINDOW_API_KEYS`
+erweitern und die Synthese entfernen.
 
 ## 3. Fenster-Sensor-Satz (7er-Satz, je Fenster)
 

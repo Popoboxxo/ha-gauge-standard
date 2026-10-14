@@ -1,13 +1,13 @@
 # Gauge Parity-Matrix (Pflegedatei)
 
-Stand: 2026-10-08 · Kanon **v1.3** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
-Konvergenz-Ziel: command_gauge **1.1.0** (Kanon-Konvergenz + synthetisches Monatsfenster).
+Stand: 2026-10-14 · Kanon **v1.3.1** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
+Konvergenz-Ziel: command_gauge **1.1.1** (Kanon-Konvergenz + korrigiertes synthetisches Monatsfenster).
 
 **Legende:** ✅ = Kanon erfüllt · ⚠️ = registrierte Abweichung (mit Kanon-ID und
 Schließungsbedingung) · ❌ = unregistrierte Abweichung = Fehler · — = existiert
 nicht (domain-seitig begründet).
 
-Checker-Ergebnisse (Stand 2026-10-08):
+Checker-Ergebnisse (Stand 2026-10-14):
 `check_canon.py` → go_gauge: **0 Fehler / 0 Warnungen** (Referenz = grün) ·
 command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
 
@@ -115,6 +115,13 @@ command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
 | CG-N2 | `pace_red_limit` Range 1–1000 | domain-begründet, entfällt |
 | CG-N3 | `usage_refresh_min` Min 5 | domain-begründet (Fair-Use), entfällt |
 | CG-N4 | `models_refresh_min` Min 60 | domain-begründet (Fair-Use), entfällt |
+
+**In v1.3.1 (command_gauge 1.1.1):** Die synthetische `month`-Ableitung (⚠️
+CG-M1) wurde korrigiert — `cap` = Plan-Grant (Plan-Katalog, gekeyt über `planId`),
+`used = max(0, cap − credits.monthly_credits)`, `reset = subscription.period_end`.
+`credits.monthlyCredits` ist ein Rest-Betrag, kein Grant; die 1.1.0-Ableitung
+(`cap=monthly_credits`, `used=summary.total_cost`) ließ den Prozentwert mit
+schwindendem Grant steigen.
 
 **In v1.3 (command_gauge 1.1.0):** `month`-Fenster synthetisch ergänzt
 (7er-Satz + `rate_limited`); die frühere `windows`-Abweichung entfällt, da die
