@@ -1,15 +1,15 @@
 # Gauge Parity-Matrix (Pflegedatei)
 
-Stand: 2026-10-14 · Kanon **v1.3.1** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
-Konvergenz-Ziel: command_gauge **1.1.1** (Kanon-Konvergenz + korrigiertes synthetisches Monatsfenster).
+Stand: 2026-10-15 · Kanon **v1.4.0** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
+Konvergenz-Ziel: command_gauge **1.2.0** (Kanon-Konvergenz + `api_status`, korrigiertes synthetisches Monatsfenster).
 
 **Legende:** ✅ = Kanon erfüllt · ⚠️ = registrierte Abweichung (mit Kanon-ID und
 Schließungsbedingung) · ❌ = unregistrierte Abweichung = Fehler · — = existiert
 nicht (domain-seitig begründet).
 
-Checker-Ergebnisse (Stand 2026-10-14):
+Checker-Ergebnisse (Stand 2026-10-15):
 `check_canon.py` → go_gauge: **0 Fehler / 0 Warnungen** (Referenz = grün) ·
-command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
+command_gauge: **0 Fehler / 8 registrierte Warnungen** (Exit 0).
 
 ## Device-Topologie
 
@@ -38,7 +38,7 @@ command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
 
 | Entity | go_gauge | command_gauge | Status |
 |---|---|---|---|
-| `api_status` (ENUM-Ursache statt Ja/Nein) | ✅ (seit 1.6.0) | — (API: kein Scope-Status-Modell) | ⚠️ CG-B5 (API-blockiert) |
+| `api_status` (ENUM-Ursache statt Ja/Nein) | ✅ (seit 1.6.0) | ✅ (abgeleitet aus `section_status`/Abo/Fenster, seit 1.2.0) | ✅ |
 
 ## Konto- / Katalog-Sensoren
 
@@ -107,7 +107,6 @@ command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
 | ID | Thema | Schließungsbedingung (Kurz) |
 |---|---|---|
 | CG-M1 | month-Fenster **synthetisch** (kein API-Fenster) | entfällt (dokumentiert); bei echtem API-Monatsfenster Synthese entfernen |
-| CG-B5 | `api_status` fehlt | kein Scope-Status-Modell in der CommandCode-API |
 | CG-C1 | Katalog-Pricing-Attribute fehlen | CommandCode-API liefert Pricing |
 | CG-C2 | live/cheapest/free-Modelle fehlen | nur bei API-Erweiterung |
 | CG-B4 | `credits_below_threshold` | domain-erlaubt, entfällt |
@@ -115,6 +114,12 @@ command_gauge: **0 Fehler / 9 registrierte Warnungen** (Exit 0).
 | CG-N2 | `pace_red_limit` Range 1–1000 | domain-begründet, entfällt |
 | CG-N3 | `usage_refresh_min` Min 5 | domain-begründet (Fair-Use), entfällt |
 | CG-N4 | `models_refresh_min` Min 60 | domain-begründet (Fair-Use), entfällt |
+
+**In v1.4.0 (command_gauge 1.2.0):** `api_status` implementiert — die Abweichung
+**CG-B5** ist geschlossen. Der Kanon-Enum wird aus dem Per-Sektion-Status
+(`section_status`), dem Abo-Status und den Fenster-`exceeded`-Flags abgeleitet
+(401 → `auth_error`, inaktives Abo → `no_subscription`, sonstiger Sektionsfehler
+→ `api_error`, überschrittenes Fenster → `rate_limited`, sonst `ok`).
 
 **In v1.3.1 (command_gauge 1.1.1):** Die synthetische `month`-Ableitung (⚠️
 CG-M1) wurde korrigiert — `cap` = Plan-Grant (Plan-Katalog, gekeyt über `planId`),

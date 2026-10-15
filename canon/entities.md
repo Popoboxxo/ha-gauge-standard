@@ -1,9 +1,19 @@
-# Gauge Entity Canon v1.3.1
+# Gauge Entity Canon v1.4.0
 
 Verbindliche Spezifikation des Entity-Modells aller Gauge-Integrationen
 (`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 1.6.0**.
 Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 (→ Abschnitt „Ausnahmeregelung").
+
+> **Neu in Kanon v1.4.0 (2026-10-15):** command_gauge **1.2.0** implementiert
+> den Scope-Status-Sensor `api_status` (§4) und schließt damit die Abweichung
+> **CG-B5**. Die CommandCode-API liefert den Abo-/API-Status zwar nur
+> konto-weit, aber command_gauge leitet den Kanon-Enum aus seinem
+> Per-Sektion-Status (`section_status`), dem Abo-Status und den
+> Fenster-`exceeded`-Flags ab (`auth_error` bei 401, `no_subscription` bei
+> inaktivem Abo, `api_error` bei sonstigem Sektionsfehler, `rate_limited` bei
+> überschrittenem Fenster, sonst `ok`). command_gauge hat genau einen Scope pro
+> Config-Entry.
 
 > **Neu in Kanon v1.3.1 (2026-10-14):** Die synthetische `month`-Ableitung
 > (⚠️ CG-M1, siehe §2) wurde korrigiert. `cap` ist der **Plan-Grant** aus dem
@@ -25,7 +35,7 @@ Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 > Settings-Keys sind kanonisch; die Legacy-Alias-Keys sind entfallen und die
 > Legacy-`unique_id`-Suffixe wurden per Entity-Registry-Migration auf die
 > Kanon-Suffixe umgeschrieben (Historie bleibt erhalten). Registriert sind nur
-> noch **API-blockierte** (`api_status`, Pricing-Katalog) und **domain-begründete**
+> noch **API-blockierte** (Pricing-Katalog) und **domain-begründete**
 > (Number-Ranges) Abweichungen.
 
 Maschinenlesbare Version: `canon/entities.schema.json`
@@ -141,11 +151,14 @@ und wurde als API-Ausfall fehlinterpretiert.
   `state`-Übersetzungen) — Marken/Alarme bauen auf den stabilen Keys.
 - Keine Unit, kein state_class; `entity_registry_enabled_default = True`.
 
-⚠️ **CG-B5:** command_gauge implementiert `api_status` nicht — die
-CommandCode-API liefert den Abo-/API-Status nur konto-weit
-(`subscription.status`: active/trialing/paid/…), kein Scope-Status-Modell
-mit `no_subscription`/`rate_limited`. — *Schließung:* nur bei API-Erweiterung
-(vgl. CG-W3, CG-C2).
+✅ **CG-B5 (command_gauge, geschlossen in 1.2.0):** command_gauge implementiert
+`api_status` jetzt — abgeleitet aus dem Per-Sektion-Status (`section_status`),
+dem Abo-Status und den Fenster-`exceeded`-Flags. Die CommandCode-API liefert den
+Abo-/API-Status zwar nur konto-weit (`subscription.status`: active/trialing/
+paid/…), aber command_gauge hat genau einen Scope pro Config-Entry, sodass die
+Ableitung kanon-konform ist: `401` → `auth_error`, inaktives Abo →
+`no_subscription`, sonstiger Sektionsfehler → `api_error`, überschrittenes
+Fenster → `rate_limited`, sonst `ok`.
 
 ## 5. Binary Sensoren
 
