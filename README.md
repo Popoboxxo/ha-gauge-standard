@@ -89,7 +89,10 @@ CI (`canon.yml`) additionally runs the Checker against both Consumer-Repos.
 
 ## Status
 
-Kanon **v1.3.1** — abgeleitet aus `go_gauge` 1.6.0 (Master). Neu in v1.3.1:
+Kanon **v1.4.0** — abgeleitet aus `go_gauge` 1.6.0 (Master). Neu in v1.4.0:
+**command_gauge 1.2.0** implementiert den Scope-Status-Sensor `api_status`
+(⚠️ CG-B5 geschlossen) — abgeleitet aus dem Per-Sektion-Status, dem Abo-Status
+und den Fenster-`exceeded`-Flags (siehe `canon/entities.md` §4). Neu in v1.3.1:
 **command_gauge 1.1.1** korrigiert die synthetische `month`-Ableitung (⚠️ CG-M1,
 siehe `canon/entities.md` §2): `cap` ist der **Plan-Grant** aus dem Plan-Katalog
 (gekeyt über die Subscription-`planId`), `used = max(0, cap −
@@ -109,9 +112,9 @@ Entity-Registry-Migration umgeschrieben (Historie bleibt). Kanon v1.1:
 Scope-Status-Sensor `api_status` (go_gauge 1.6.0), `subscription_active` ohne
 device_class.
 
-Registriert bleiben nur **API-blockierte** Abweichungen (`api_status`,
-Pricing-Katalog-Sensoren/Attribute), die **synthetische** month-Ableitung (CG-M1)
-und **domain-begründete** Number-Ranges.
+Registriert bleiben nur **API-blockierte** Abweichungen (Pricing-Katalog-Sensoren/
+Attribute), die **synthetische** month-Ableitung (CG-M1) und **domain-begründete**
+Number-Ranges.
 
 Checker-Ergebnis: `check_canon.py` → go_gauge **0/0** (Referenz grün),
-command_gauge **0 Fehler / 9 registrierte Warnungen**.
+command_gauge **0 Fehler / 8 registrierte Warnungen**.
