@@ -98,7 +98,7 @@ Setup-Re-Raise nach `hass.data`-Cleanup, i18n-Pflicht für `reauth_confirm` +
 Abort-Gründe, kein `VERSION`-Bump und strukturelle Auth-Abbildung im Status-Sensor
 (`auth_error`, §4). 403 EntitlementError bleibt `no_subscription` (kein Auth-Fall).
 Kein neuer ⚠️-Eintrag — command_gauge **1.2.0** ist konforme Referenz, go_gauge
-zieht mit **PR #32** nach (offen). Neu in v1.4.0:
+zieht mit **PR #32** nach (gemergt 2026-10-18). Neu in v1.4.0:
 **command_gauge 1.2.0** implementiert den Scope-Status-Sensor `api_status`
 (⚠️ CG-B5 geschlossen) — abgeleitet aus dem Per-Sektion-Status, dem Abo-Status
 und den Fenster-`exceeded`-Flags (siehe `canon/entities.md` §4). Neu in v1.3.1:

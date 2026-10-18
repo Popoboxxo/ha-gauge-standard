@@ -16,7 +16,7 @@ Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 > i18n-Pflicht für `reauth_confirm` + Abort-Gründe, kein `VERSION`-Bump und
 > strukturelle Auth-Abbildung im Status-Sensor (`auth_error`, §4).
 > Referenzimplementierung: command_gauge **1.2.0**; go_gauge zieht mit
-> **PR #32** nach (noch offen). **Kein neuer ⚠️-Eintrag** — die Angleichung ist
+> **PR #32** nach (gemergt 2026-10-18). **Kein neuer ⚠️-Eintrag** — die Angleichung ist
 > beschlossen (Paar-Change), keine domain-begründete Divergenz.
 
 > **Neu in Kanon v1.4.0 (2026-10-15):** command_gauge **1.2.0** implementiert
@@ -395,4 +395,4 @@ blieben; HA sieht dafür den Reauth-Flow vor (`ConfigEntryAuthFailed` →
   Fehlertexte.
 
 **Referenz:** command_gauge **1.2.0** = konforme Referenzimplementierung
-(Reauth vollständig); go_gauge zieht mit **PR #32** nach (noch offen).
+(Reauth vollständig); go_gauge zieht mit **PR #32** nach (gemergt 2026-10-18).
