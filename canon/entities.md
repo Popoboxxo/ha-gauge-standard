@@ -1,9 +1,23 @@
-# Gauge Entity Canon v1.4.0
+# Gauge Entity Canon v1.5.0
 
 Verbindliche Spezifikation des Entity-Modells aller Gauge-Integrationen
 (`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 1.6.0**.
 Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 (→ Abschnitt „Ausnahmeregelung").
+
+> **Neu in Kanon v1.5.0 (2026-10-18):** Der Kanon regelt erstmals den
+> **Config-Flow für die Token-Erneuerung (Reauth)** normativ (§12). Anlass: Ein
+> abgelaufener Token (HTTP 401) ließ Entities ohne Reauth-Flow dauerhaft auf
+> `error`/`unavailable` stehen. Neu verbindlich: typisierter Auth-Status im
+> Coordinator (401 → `ConfigEntryAuthFailed`, **kein** transienter Netzwerkfehler;
+> 403 EntitlementError bleibt `no_subscription`), `async_step_reauth` →
+> `async_step_reauth_confirm` mit Austausch **nur** des Secrets (`unique_id` und
+> `entry_id` unverändert), Re-Raise nach `hass.data`-Cleanup im Setup,
+> i18n-Pflicht für `reauth_confirm` + Abort-Gründe, kein `VERSION`-Bump und
+> strukturelle Auth-Abbildung im Status-Sensor (`auth_error`, §4).
+> Referenzimplementierung: command_gauge **1.2.0**; go_gauge zieht mit
+> **PR #32** nach (noch offen). **Kein neuer ⚠️-Eintrag** — die Angleichung ist
+> beschlossen (Paar-Change), keine domain-begründete Divergenz.
 
 > **Neu in Kanon v1.4.0 (2026-10-15):** command_gauge **1.2.0** implementiert
 > den Scope-Status-Sensor `api_status` (§4) und schließt damit die Abweichung
@@ -321,3 +335,64 @@ vorn (`{window} Usage`, `{window} Burn-Rate`, `{window} rate-limited`, …).
 | ID | Punkt | Stand |
 |---|---|---|
 | OP-1 | `suggested_object_id`-Pinning auf Englisch (Vorbild `ha-health-o-mat`) — beide Repos ohne Pinning; command_gauge hat deutsch Erstregistrierte Slugs (0.1.1) | Koordinierte Umsetzung + Registry-Migration geplant |
+
+## 12. Config-Flow-Kanon: Token-Erneuerung (Reauth)
+
+Verbindlich für beide Integrationen. Anlass: Ein abgelaufener Token führte ohne
+Reauth-Flow dazu, dass Entities dauerhaft auf `error`/`unavailable` stehen
+blieben; HA sieht dafür den Reauth-Flow vor (`ConfigEntryAuthFailed` →
+`async_step_reauth`).
+
+### 12.1 Coordinator: Auth-Fehler typisieren (401 ≠ transient)
+
+- HTTP **401** ist ein Auth-Fehler und wird als
+  `homeassistant.exceptions.ConfigEntryAuthFailed` **geworfen** — über eine
+  typisierte Statusmenge (z. B. `AUTH_STATUSES = {401}`).
+- **Nicht** als transientes Netzwerkproblem behandeln (`UpdateFailed`).
+- HTTP **403** mit `EntitlementError` ist **kein** Auth-Fall und bleibt
+  `no_subscription` (vgl. §4); er löst **keinen** Reauth-Flow aus.
+
+### 12.2 Config-Flow: `async_step_reauth` → `async_step_reauth_confirm`
+
+- `async_step_reauth` (Trigger durch `ConfigEntryAuthFailed` bzw.
+  „Erneut authentifizieren" in der UI) delegiert an `async_step_reauth_confirm`.
+- Im Confirm-Schritt wird **ausschließlich das Secret** (Token/API-Key) ersetzt:
+  `entry.unique_id` und `entry.entry_id` bleiben **unverändert** (eiserne Regel
+  „`unique_id` nie ändern").
+- Abort-Gründe sind kanonisch: `reauth_failed` (Entry nicht auffindbar) und
+  `reauth_successful` (Token ersetzt + Entry neu geladen).
+
+### 12.3 Setup: `ConfigEntryAuthFailed` nicht verschlucken
+
+- `async_setup_entry` darf `ConfigEntryAuthFailed` aus dem ersten Refresh
+  **nicht** abfangen und als generischen Setup-Fehler behandeln.
+- Nach dem Aufräumen von `hass.data` wird die Exception **erneut geworfen**
+  (`raise`), damit HA den Reauth-Flow anbietet.
+
+### 12.4 i18n-Pflicht
+
+- Der Schritt `reauth_confirm` sowie die Abort-Gründe `reauth_failed` /
+  `reauth_successful` stehen in `strings.json` **und** in allen
+  `translations/*.json`.
+- Die Key-Parität bleibt grün (CI-Check `scripts/check_json_consistency.py` in
+  den Integrationen).
+
+### 12.5 Kein `VERSION`-Bump
+
+- Der Reauth-Flow ändert **kein** Entry-Schema → **kein** `VERSION`-Bump und
+  **kein** `async_migrate_entry`-Handler (eiserne Regel Releases).
+
+### 12.6 Tests (Pflicht)
+
+- 401-Response → `ConfigEntryAuthFailed` (nicht `UpdateFailed`).
+- Reauth-Confirm ersetzt nur das Token; `unique_id`/`entry_id` bleiben stabil.
+- 403-Entitlement bleibt `no_subscription` (kein Reauth-Trigger).
+
+### 12.7 Status-Sensor: Auth-Fehler strukturell abbilden
+
+- Auth-Fehler werden **strukturell** über den Scope-Status abgebildet
+  (Kanon-State `auth_error`, vgl. §4), **nicht** per String-Matching auf
+  Fehlertexte.
+
+**Referenz:** command_gauge **1.2.0** = konforme Referenzimplementierung
+(Reauth vollständig); go_gauge zieht mit **PR #32** nach (noch offen).
