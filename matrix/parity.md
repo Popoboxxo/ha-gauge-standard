@@ -44,17 +44,17 @@ command_gauge: **0 Fehler / 8 registrierte Warnungen** (Exit 0).
 
 Kanon §12 (neu in v1.5.0). command_gauge **1.2.0** ist die konforme
 Referenzimplementierung (Reauth vollständig); go_gauge zieht mit **PR #32**
-nach (noch offen). Status **✅ / kein ⚠️** — die Angleichung ist als Paar-Change
+nach (gemergt 2026-10-18). Status **✅ / kein ⚠️** — die Angleichung ist als Paar-Change
 beschlossen, keine domain-begründete Divergenz.
 
 | Aspekt (Kanon §12) | go_gauge | command_gauge | Status |
 |---|---|---|---|
-| 401 → `ConfigEntryAuthFailed` (typisierter Auth-Status, nicht transient) | ✅ (PR #32, offen) | ✅ (Referenz) | ✅ |
+| 401 → `ConfigEntryAuthFailed` (typisierter Auth-Status, nicht transient) | ✅ (PR #32, gemergt) | ✅ (Referenz) | ✅ |
 | 403 EntitlementError ≠ Auth (bleibt `no_subscription`) | ✅ | ✅ | ✅ |
-| `async_step_reauth` → `async_step_reauth_confirm`, nur Secret ersetzt | ✅ (PR #32, offen) | ✅ (Referenz) | ✅ |
+| `async_step_reauth` → `async_step_reauth_confirm`, nur Secret ersetzt | ✅ (PR #32, gemergt) | ✅ (Referenz) | ✅ |
 | `unique_id`/`entry_id` bleiben unverändert | ✅ | ✅ | ✅ |
-| Setup re-raised `ConfigEntryAuthFailed` nach `hass.data`-Cleanup | ✅ (PR #32, offen) | ✅ (Referenz) | ✅ |
-| i18n: `reauth_confirm` + Abort-Gründe in `strings.json`/`translations/*` | ✅ (PR #32, offen) | ✅ (Referenz) | ✅ |
+| Setup re-raised `ConfigEntryAuthFailed` nach `hass.data`-Cleanup | ✅ (PR #32, gemergt) | ✅ (Referenz) | ✅ |
+| i18n: `reauth_confirm` + Abort-Gründe in `strings.json`/`translations/*` | ✅ (PR #32, gemergt) | ✅ (Referenz) | ✅ |
 | Kein `VERSION`-Bump / kein `async_migrate_entry` | ✅ | ✅ | ✅ |
 | Status-Sensor bildet Auth strukturell ab (`auth_error`, §4) | ✅ | ✅ | ✅ |
 
