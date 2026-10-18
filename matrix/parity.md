@@ -1,6 +1,6 @@
 # Gauge Parity-Matrix (Pflegedatei)
 
-Stand: 2026-10-15 · Kanon **v1.4.0** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
+Stand: 2026-10-15 · Kanon **v1.5.0** (`canon/entities.md`, Master = go_gauge 1.6.0) ·
 Konvergenz-Ziel: command_gauge **1.2.0** (Kanon-Konvergenz + `api_status`, korrigiertes synthetisches Monatsfenster).
 
 **Legende:** ✅ = Kanon erfüllt · ⚠️ = registrierte Abweichung (mit Kanon-ID und
@@ -39,6 +39,24 @@ command_gauge: **0 Fehler / 8 registrierte Warnungen** (Exit 0).
 | Entity | go_gauge | command_gauge | Status |
 |---|---|---|---|
 | `api_status` (ENUM-Ursache statt Ja/Nein) | ✅ (seit 1.6.0) | ✅ (abgeleitet aus `section_status`/Abo/Fenster, seit 1.2.0) | ✅ |
+
+## Config-Flow: Token-Erneuerung (Reauth)
+
+Kanon §12 (neu in v1.5.0). command_gauge **1.2.0** ist die konforme
+Referenzimplementierung (Reauth vollständig); go_gauge zieht mit **PR #32**
+nach (gemergt 2026-10-18). Status **✅ / kein ⚠️** — die Angleichung ist als Paar-Change
+beschlossen, keine domain-begründete Divergenz.
+
+| Aspekt (Kanon §12) | go_gauge | command_gauge | Status |
+|---|---|---|---|
+| 401 → `ConfigEntryAuthFailed` (typisierter Auth-Status, nicht transient) | ✅ (PR #32, gemergt) | ✅ (Referenz) | ✅ |
+| 403 EntitlementError ≠ Auth (bleibt `no_subscription`) | ✅ | ✅ | ✅ |
+| `async_step_reauth` → `async_step_reauth_confirm`, nur Secret ersetzt | ✅ (PR #32, gemergt) | ✅ (Referenz) | ✅ |
+| `unique_id`/`entry_id` bleiben unverändert | ✅ | ✅ | ✅ |
+| Setup re-raised `ConfigEntryAuthFailed` nach `hass.data`-Cleanup | ✅ (PR #32, gemergt) | ✅ (Referenz) | ✅ |
+| i18n: `reauth_confirm` + Abort-Gründe in `strings.json`/`translations/*` | ✅ (PR #32, gemergt) | ✅ (Referenz) | ✅ |
+| Kein `VERSION`-Bump / kein `async_migrate_entry` | ✅ | ✅ | ✅ |
+| Status-Sensor bildet Auth strukturell ab (`auth_error`, §4) | ✅ | ✅ | ✅ |
 
 ## Konto- / Katalog-Sensoren
 

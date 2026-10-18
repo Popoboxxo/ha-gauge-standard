@@ -23,7 +23,7 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 
 ```
 canon/
-  entities.md          # verbindlicher Kanon v1.3.1 (menschenlesbar, Deutsch)
+  entities.md          # verbindlicher Kanon v1.5.0 (menschenlesbar, Deutsch)
   entities.schema.json # maschinenlesbare Version (prüfbar)
 scripts/
   check_canon.py       # Prüft eine Integration gegen entities.schema.json
@@ -89,7 +89,16 @@ CI (`canon.yml`) additionally runs the Checker against both Consumer-Repos.
 
 ## Status
 
-Kanon **v1.4.0** — abgeleitet aus `go_gauge` 1.6.0 (Master). Neu in v1.4.0:
+Kanon **v1.5.0** — abgeleitet aus `go_gauge` 1.6.0 (Master). Neu in v1.5.0:
+Der Kanon regelt normativ den **Config-Flow für die Token-Erneuerung (Reauth)**
+(`canon/entities.md` §12): 401 → `ConfigEntryAuthFailed` (typisierter Auth-Status,
+kein transienter Netzwerkfehler), `async_step_reauth` → `async_step_reauth_confirm`
+mit Austausch **nur** des Secrets (`unique_id`/`entry_id` unverändert),
+Setup-Re-Raise nach `hass.data`-Cleanup, i18n-Pflicht für `reauth_confirm` +
+Abort-Gründe, kein `VERSION`-Bump und strukturelle Auth-Abbildung im Status-Sensor
+(`auth_error`, §4). 403 EntitlementError bleibt `no_subscription` (kein Auth-Fall).
+Kein neuer ⚠️-Eintrag — command_gauge **1.2.0** ist konforme Referenz, go_gauge
+zieht mit **PR #32** nach (gemergt 2026-10-18). Neu in v1.4.0:
 **command_gauge 1.2.0** implementiert den Scope-Status-Sensor `api_status`
 (⚠️ CG-B5 geschlossen) — abgeleitet aus dem Per-Sektion-Status, dem Abo-Status
 und den Fenster-`exceeded`-Flags (siehe `canon/entities.md` §4). Neu in v1.3.1:
