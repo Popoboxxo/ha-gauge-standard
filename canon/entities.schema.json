@@ -1,10 +1,10 @@
 {
-  "canon_version": "1.5.0",
-  "stand": "2026-10-15",
+  "canon_version": "1.6.0",
+  "stand": "2026-10-25",
   "master": {
     "repo": "Popoboxxo/ha-go-gauge",
     "domain": "go_gauge",
-    "version": "1.6.0"
+    "version": "2.0.0"
   },
   "convergence_target": {
     "repo": "Popoboxxo/ha-command-gauge",
@@ -191,7 +191,7 @@
       "icons": [],
       "unique_id_suffix": "api_reachable",
       "attributes": [],
-      "behavior": "go_gauge: catalog owner only; command_gauge alias always available"
+      "behavior": "go_gauge: account-wide, evidence/TTL based tri-state (own account ConfigEntry). ON = at least one FRESH success (catalog fetch ok OR workspace status ok); neutral answers (no_subscription/auth_error) never count as success; only fresh failures -> OFF; no fresh evidence -> unknown. TTL = 2x account models interval (fallback 2x default 60) / 3x the smallest workspace usage interval. command_gauge alias always available"
     },
     {
       "id": "model_catalog",
@@ -205,7 +205,7 @@
       "icons": ["mdi:format-list-bulleted"],
       "unique_id_suffix": "model_catalog",
       "attributes": ["models_updated_at", "count", "live_count", "free_models", "cheapest_model", "cheapest_overall", "ranking_by_cost", "catalog_json"],
-      "behavior": "ONE sensor carries the whole catalog as dynamic JSON attributes"
+      "behavior": "ONE sensor carries the whole catalog as dynamic JSON attributes; owned by the account ConfigEntry (device identifiers {(DOMAIN, \"account\")}, unique_id prefix 'account_') - no catalog owner on workspace entries"
     },
     {
       "id": "live_models_count",
@@ -284,13 +284,14 @@
     {
       "id": "models_refresh_min",
       "platform": "number",
-      "scope": "entry",
+      "scope": "account",
       "translation_key": "models_refresh_min",
       "name_en": "Models Refresh (min)",
       "unit": "min",
       "icons": ["mdi:timer-outline"],
       "unique_id_suffix": "models_refresh_minutes",
-      "attributes": []
+      "attributes": [],
+      "behavior": "GLOBAL on the go_gauge account ConfigEntry (not per workspace): NumberMode.BOX, step 1, range 1-1440, default 60; live effect via AccountCoordinator.set_fetch_interval + persist_account_options, no entry reload"
     },
     {
       "id": "auto_update_usage",
@@ -300,17 +301,19 @@
       "name_en": "Auto Update Usage",
       "icons": ["mdi:autorenew"],
       "unique_id_suffix": "auto_update_usage",
-      "attributes": []
+      "attributes": [],
+      "behavior": "workspace-local: toggles the usage cycle, recalculate_interval() + persist_options"
     },
     {
       "id": "auto_update_models",
       "platform": "switch",
-      "scope": "entry",
+      "scope": "account",
       "translation_key": "auto_update_models",
       "name_en": "Auto Update Models",
       "icons": ["mdi:autorenew"],
       "unique_id_suffix": "auto_update_models",
-      "attributes": []
+      "attributes": [],
+      "behavior": "GLOBAL on the go_gauge account ConfigEntry (default ON, replaces the per-workspace control): toggles AccountCoordinator.auto_fetch live via set_auto_fetch + persist_account_options, no recalculate_interval and no entry reload"
     },
     {
       "id": "refresh",
@@ -321,7 +324,18 @@
       "icons": ["mdi:refresh"],
       "unique_id_suffix": "refresh",
       "attributes": [],
-      "behavior": "forces both cycles (usage + models) regardless of auto switches"
+      "behavior": "workspace device-scoped: forces the usage cycle ONLY (never a catalog fetch, which belongs to the account entry)"
+    },
+    {
+      "id": "account_refresh",
+      "platform": "button",
+      "scope": "account",
+      "translation_key": "refresh",
+      "name_en": "Refresh",
+      "icons": ["mdi:refresh"],
+      "unique_id_suffix": "refresh",
+      "attributes": [],
+      "behavior": "forces the account catalog fetch only (AccountCoordinator.async_fetch_now, the only account HTTP path); same translation_key 'refresh' as the workspace button, separated by device/unique_id prefix 'account_'"
     }
   ],
   "domain_extensions": {
@@ -353,7 +367,7 @@
       {"id": "pace_red_limit", "aspect": "settings_range", "cg_id": "CG-N2", "severity": "warning", "actual": {"min": 1, "max": 1000}, "reason": "Domain-begruendet: Forecast darf >300 projizieren, eine rote Ampelgrenze ueber 300 ist sinnvoll", "closing": "entfaellt (domain-begruendete Abweichung)"},
       {"id": "usage_refresh_min", "aspect": "settings_range", "cg_id": "CG-N3", "severity": "warning", "actual": {"min": 5, "max": 1440}, "reason": "Domain-begruendet (CommandCode-API-Fair-Use)", "closing": "entfaellt (domain-begruendete Abweichung)"},
       {"id": "models_refresh_min", "aspect": "settings_range", "cg_id": "CG-N4", "severity": "warning", "actual": {"min": 60, "max": 1440}, "reason": "Domain-begruendet (CommandCode-API-Fair-Use)", "closing": "entfaellt (domain-begruendete Abweichung)"},
-      {"id": "account_device", "aspect": "account_device", "cg_id": "CG-D1", "doc_only": true, "severity": "info", "actual": null, "reason": "go_gauge uses account Device + Catalog-Owner; command_gauge: each Config-Entry is its own account, no duplicate problem", "closing": "entfaellt (kein Duplikat-Problem)"},
+      {"id": "account_device", "aspect": "account_device", "cg_id": "CG-D1", "doc_only": true, "severity": "info", "actual": null, "reason": "go_gauge owns the account Device through its own account ConfigEntry (unique_id go_gauge_account, entry_kind 'account'); workspace entries no longer hold catalog entities - there is no 'catalog owner' first-instance rule anymore. command_gauge: each Config-Entry is its own account, no duplicate problem", "closing": "entfaellt (kein Duplikat-Problem)"},
       {"id": "credits_below_threshold", "aspect": "domain_extension", "cg_id": "CG-B4", "doc_only": true, "severity": "info", "actual": "present", "reason": "domain-erlaubt Extension (command_gauge only)", "closing": "entfaellt (domain-erlaubt)"}
     ]
   }

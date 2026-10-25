@@ -1,9 +1,27 @@
-# Gauge Entity Canon v1.5.0
+# Gauge Entity Canon v1.6.0
 
 Verbindliche Spezifikation des Entity-Modells aller Gauge-Integrationen
-(`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 1.6.0**.
+(`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 2.0.0**.
 Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 (→ Abschnitt „Ausnahmeregelung").
+
+> **Neu in Kanon v1.6.0 (2026-10-25):** Der Kanon hebt den Konto-Vertrag auf eine
+> **eigene Konto-ConfigEntry** (go_gauge **2.0.0**). Anlass: Der bisherige Text
+> beschrieb die Konto-Entities als „Catalog Owner / erste Workspace-Instanz" —
+> real besitzt go_gauge seit 2.0.0 eine eigene, workspace-unabhängige
+> Konto-ConfigEntry (`entry_kind: "account"`, `unique_id: go_gauge_account`),
+> der Device `Go Gauge Konto` (`identifiers: {(DOMAIN, "account")}`) gehört ihr.
+> Die **Catalog-Owner-Regel entfällt ersatzlos**; Konto-Entities tragen das
+> `unique_id`-Präfix `account_` (§13). Neu verbindlich außerdem:
+> `api_reachable` ist accountweit und **evidenz-/TTL-basiert** (Tri-State, §5),
+> die beiden Refresh-Buttons sind **device-scoped** geteilt (`translation_key`
+> `refresh`: Workspace = nur Usage-Zyklus, Konto = nur Katalog-Fetch, §8.3),
+> und die Modell-Settings (`auto_update_models`, `models_refresh_min`) sind
+> **global auf der Konto-Entry** (Default ON / 60 min, Range 1–1440). HA-Minimum
+> ist **2026.8.0**; die Schema-Migration **v7 → v8** erhält `entity_id`/History
+> (§13). `command_gauge` bleibt **unberührt** (kein Konto-Split: dort gilt
+> weiter 1 Entry = 1 Konto). **Kein neuer ⚠️-Eintrag** — CG-D1 bleibt als
+> Doku-Info bestehen.
 
 > **Neu in Kanon v1.5.0 (2026-10-18):** Der Kanon regelt erstmals den
 > **Config-Flow für die Token-Erneuerung (Reauth)** normativ (§12). Anlass: Ein
@@ -63,7 +81,7 @@ Maschinenlesbare Version: `canon/entities.schema.json`
 | Device-Name | `f"{Brand} {Scope}"` — go_gauge: `Go Gauge {workspace_name}`; command_gauge: `Command Gauge {account_name}` |
 | `manufacturer` | `Popoboxxo` (beide Integrationen) |
 | `model` | API-Produktname — go_gauge: `OpenCode Go`; command_gauge: `CommandCode Cloud` |
-| Account-Device (konto-/workspace-übergreifende Entities) | go_gauge: separates Device `Go Gauge Konto` mit `identifiers: {(DOMAIN, "account")}`, Katalog-Entities nur vom *Catalog Owner* (erste Instanz). command_gauge: entfällt (jeder Entry = eigenes Konto, kein Duplikat-Problem) ⚠️ CG-D1 |
+| Account-Device (konto-/workspace-übergreifende Entities) | go_gauge: separates Device `Go Gauge Konto` mit `identifiers: {(DOMAIN, "account")}`, owned by the **eigene Konto-ConfigEntry** (`entry_kind: "account"`, `unique_id: go_gauge_account`) — **kein Catalog Owner** mehr, keine erste Workspace-Instanz; die Konto-Entities tragen das `unique_id`-Präfix `account_` (§13). command_gauge: entfällt (jeder Entry = eigenes Konto, kein Duplikat-Problem) ⚠️ CG-D1 |
 | `_attr_has_entity_name = True` global; kein `_attr_name`-Literal irgendwo | verbindlich (HACS-eiserne Regel) |
 
 ## 2. Fenster (Windows)
@@ -104,8 +122,9 @@ erweitern und die Synthese entfernen.
 ## 3. Fenster-Sensor-Satz (7er-Satz, je Fenster)
 
 Pro Fenster existieren exakt diese 7 Sensoren. `unique_id`-Schema:
-`f"{entry.entry_id}_{scope}_{window}_{suffix}"` (scope = workspace_key /
-account scope). Reihenfolge der Suffixe ist Kanon.
+`f"{entry.entry_id}_{scope}_{window}_{suffix}"` (scope = workspace_key).
+Workspace-unabhängige Konto-Entities folgen dagegen dem Präfix-Schema
+`account_<suffix>` (§13). Reihenfolge der Suffixe ist Kanon.
 
 | # | Konzept | translation_key | Unit | device_class | state_class | Icon(s) | unique_id-Suffix | EN-Name |
 |---|---|---|---|---|---|---|---|---|
@@ -184,18 +203,49 @@ Fenster → `rate_limited`, sonst `ok`.
 
 Verhalten: `rate_limited` ON bei Fenster-Status `rate-limited`; bei
 `no_subscription`/Update-Fehler `unavailable` (nicht OFF).
-`api_reachable` ON bei `last_update_success` und vorhandenem `fetched_at`;
-nur vom Catalog Owner (go_gauge).
 `subscription_active` ON bei Scope-Status `ok`, OFF bei `no_subscription`
 (Attribut `note` trägt die Ursache), sonst `unknown` (None). **Kein
 device_class** (Kanon seit 1.6.0): CONNECTIVITY ließ HA den Zustand als
 „Getrennt" rendern — ein Abo ist ein Subskriptionszustand, keine Verbindung;
 Verbindung ist allein Sache von `api_reachable`.
 
+### 5.1 `api_reachable` (go_gauge): accountweit, evidenz-/TTL-basiert
+
+Verbindlich für go_gauge **2.0.0**. Der Sensor gehört der Konto-Entry
+(`unique_id` `account_api_reachable`), ist **accountweit** (nicht je Workspace)
+und **tri-state** — er leitet den Zustand aus zeitgestempelten Fetch-Ergebnissen
+(*Evidence*) ab, nicht mehr aus `last_update_success` + `fetched_at`:
+
+| Beobachtung | Ergebnis |
+|---|---|
+| mindestens ein **frischer** Erfolg (Katalog-Fetch `ok` **oder** Workspace-`status=ok`) | **ON** (`fresh_ok`) |
+| frische *neutrale* Antwort (401 → `auth_error`, 403 → `no_subscription`) ohne frischen Erfolg | **unknown** (`answered_no_success`) — neutral zählt **nicht** als Erfolg |
+| nur frische Fehler (Netz/5xx/Cloudflare) | **OFF** (`all_fresh_failed`) |
+| keine frische Evidence (auch leer) | **unknown** (`no_evidence`) |
+
+- **Evidenzquellen:** Konto-Katalog-Fetch (`source="models"`, `workspace=None`)
+  und jeder geladene Workspace-Zyklus (`source="usage"`, mit Workspace-Name).
+- **TTL:** Models-Evidenz lebt **2× Konto-Intervall** (bei ausgeschaltetem
+  Auto-Refresh 2× Default 60 min = 120 min, da es kein Basis-Intervall gibt),
+  Usage-Evidenz **3× Workspace-Usage-Intervall**. Maßgeblich ist das
+  *konfigurierte* Basis-Intervall, nicht das Backoff-erweiterte effektive —
+  sonst hielte sich veraltete Evidenz unbegrenzt am Leben.
+- **Grenzfall:** `age <= ttl` zählt als frisch; veraltete Evidenz wird ignoriert
+  und **nie** als Fehler uminterpretiert.
+- **Unit/device_class:** CONNECTIVITY, keine Unit, kein state_class.
+- Attribute sind **nicht kanonisch gefordert** (`attributes: []`); go_gauge
+  publiziert zusätzlich `reachability_reason`, `evidence`, `models_ttl_s`,
+  `usage_ttl_s`, `checked_at` (rein informativ, command_gauge nicht).
+
+command_gauge nutzt weiterhin das Alias-Verhalten (`is_on` = `last_update_success`
++ `fetched_at`, bewusst immer `available`) — Konto-Sensor ohne Konto-Entry.
+
 ✅ **CG-B1/B2/B3 (command_gauge, geschlossen in 1.0.0):** `rate_limited` ist
 kanonisch (Icon `mdi:block-helper`, Suffix `limited`, `unavailable` statt OFF
-ohne Abo); `api_reachable` ist kanonisch benannt (`is_on` = `last_update_success`
-+ `fetched_at`, bewusst weiterhin immer `available` — Konto-Sensor); der
+ohne Abo); in command_gauge ist `api_reachable` kanonisch benannt (`is_on` =
+`last_update_success` + `fetched_at`, bewusst weiterhin immer `available` —
+Konto-Sensor ohne Konto-Entry; go_gauge nutzt seit 2.0.0 die Evidenz-/TTL-Regel
+aus §5.1); der
 `subscription_active`-Sensor hat **keinen** `device_class` mehr und trägt
 `mdi:shield-check-outline` plus `workspace_key`/`note`.
 ⚠️ **CG-B4 (domain-spezifisch, erlaubt):** `credits_below_threshold`
@@ -206,6 +256,15 @@ kein go_gauge-Äquivalent. *Schließung:* entfällt.
 
 Grundsatz: **EIN Sensor trägt den kompletten Katalog als dynamische
 JSON-Attribute** — neue Modelle erscheinen ohne neue Entities.
+
+Besitz (go_gauge seit 2.0.0): Die vier Katalog-Sensoren gehören der **eigenen
+Konto-ConfigEntry** (`entry_kind: "account"`), nicht mehr einer Workspace-Entry
+und nicht mehr einem „Catalog Owner". Sie hängen am Device
+`Go Gauge Konto` (`identifiers: {(DOMAIN, "account")}`) und tragen das
+`unique_id`-Präfix **`account_`** — z. B. `account_model_catalog`,
+`account_models_live_count`, `account_cheapest_model`, `account_free_models`
+(§13). Der in der Tabelle genannte `unique_id`-Suffix bleibt der nackte
+Konzept-Token; das `account_`-Präfix ist die Device-Bindung der Konto-Entry.
 
 | Konzept | translation_key | state_class | Icon | unique_id-Suffix | EN-Name |
 |---|---|---|---|---|---|
@@ -219,6 +278,11 @@ Attribute `model_catalog` (Kanon): `models_updated_at`, `count`,
 `ranking_by_cost` (nach Kosten-Nutzen-Ratio, nur live), `catalog_json`
 (kompletter Katalog als JSON-String).
 Attribute `cheapest_model`: `cheapest_overall`, `ratio_usd_per_1m`.
+
+go_gauge publiziert auf `model_catalog` zusätzlich die Konto-Settings als
+Attribute (`account_auto_update_models`, `account_fetch_interval_minutes`,
+`account_models_refresh_minutes`, `account_last_models_outcome`) — rein
+informativ, **nicht** kanonisch gefordert (command_gauge liefert sie nicht).
 
 ⚠️ **CG-C1:** command_gauge `model_catalog` ist kanonisch benannt und trägt
 `count`, `catalog_json`, `models_updated_at`; die Pricing-Attribute
@@ -258,17 +322,28 @@ nachgebildet).
 Alle: `NumberMode.BOX`, `native_step = 1`, Unit wie angegeben, sofort
 wirksam + persistent via `persist_options` (ohne Entry-Reload).
 
-| # | translation_key | Unit | Min | Max | Default | Icon | unique_id-Suffix | EN-Name |
-|---|---|---|---|---|---|---|---|---|
-| 1 | `warning_threshold` | `%` | **1** | **100** | 80 | `mdi:alert-octagon-outline` | `warn_percent` | `Warning Threshold` |
-| 2 | `pace_red_limit` | `%` | **1** | **300** | 100 | `mdi:alert-decagram-outline` | `pace_red_percent` | `Pace Red Limit` |
-| 3 | `usage_refresh_min` | `min` | **1** | **1440** | 10 | `mdi:timer-outline` | `usage_refresh_minutes` | `Usage Refresh (min)` |
-| 4 | `models_refresh_min` | `min` | **1** | **1440** | 60 | `mdi:timer-outline` | `models_refresh_minutes` | `Models Refresh (min)` |
+| # | translation_key | Unit | Min | Max | Default | Icon | unique_id-Suffix | EN-Name | Ebene |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | `warning_threshold` | `%` | **1** | **100** | 80 | `mdi:alert-octagon-outline` | `warn_percent` | `Warning Threshold` | Workspace |
+| 2 | `pace_red_limit` | `%` | **1** | **300** | 100 | `mdi:alert-decagram-outline` | `pace_red_percent` | `Pace Red Limit` | Workspace |
+| 3 | `usage_refresh_min` | `min` | **1** | **1440** | 10 | `mdi:timer-outline` | `usage_refresh_minutes` | `Usage Refresh (min)` | Workspace |
+| 4 | `models_refresh_min` | `min` | **1** | **1440** | 60 | `mdi:timer-outline` | `models_refresh_minutes` | `Models Refresh (min)` | **Konto (global)** |
 
 Die Schwellen gelten einheitlich für ALLE Fenster (nicht je Fenster).
 Defaults zusätzlich als Konstanten: `DEFAULT_WARN_PERCENT=80`,
 `DEFAULT_PACE_RED_PERCENT=100`, `DEFAULT_USAGE_REFRESH_MINUTES=10`,
 `DEFAULT_MODELS_REFRESH_MINUTES=60`.
+
+**go_gauge 2.0.0 — Modell-Settings sind global (Konto-Entry):**
+`models_refresh_min` ist **kein** Workspace-Setting mehr. Es gehört der
+Konto-ConfigEntry, hängt am Konto-Device und heißt `account_models_refresh_minutes`
+(§13). Range **1–1440**, Default **60** (Konstanten `ACCOUNT_MODELS_REFRESH_MIN`/
+`_MAX`, `DEFAULT_ACCOUNT_MODELS_REFRESH_MINUTES=60`). Wirkung: `set_fetch_interval()`
+armiert den Katalog-Timer neu + `persist_account_options` — ohne Entry-Reload
+und ohne `recalculate_interval()`, weil der Konto-Koordinator einen eigenen
+Fetch-Timer besitzt. Die drei Workspace-Numbers (`warning_threshold`,
+`pace_red_limit`, `usage_refresh_min`) bleiben unverändert workspace-lokal
+(`persist_options`).
 
 ✅ **CG-N1 (Keys/Icons geschlossen in 1.0.0):** command_gauge nutzt jetzt die
 Kanon-Keys `warning_threshold`, `pace_red_limit`, `usage_refresh_min`,
@@ -279,25 +354,41 @@ Kanon-Keys `warning_threshold`, `pace_red_limit`, `usage_refresh_min`,
 
 ### 8.2 Switches (2)
 
-| translation_key | Icon | unique_id-Suffix | EN-Name |
-|---|---|---|---|
-| `auto_update_usage` | `mdi:autorenew` | `auto_update_usage` | `Auto Update Usage` |
-| `auto_update_models` | `mdi:autorenew` | `auto_update_models` | `Auto Update Models` |
+| translation_key | Icon | unique_id-Suffix | EN-Name | Ebene |
+|---|---|---|---|---|
+| `auto_update_usage` | `mdi:autorenew` | `auto_update_usage` | `Auto Update Usage` | Workspace |
+| `auto_update_models` | `mdi:autorenew` | `auto_update_models` | `Auto Update Models` | **Konto (global)** |
 
-Beide schalten den jeweiligen Auto-Refresh-Zyklus und triggern
-`recalculate_interval()`; persistiert via `persist_options`.
+`auto_update_usage` (workspace-lokal, go_gauge/command_gauge): schaltet den
+Usage-Zyklus, triggert `recalculate_interval()`, persistiert via
+`persist_options`.
+
+`auto_update_models` (go_gauge 2.0.0: **global auf der Konto-Entry**, Default
+**ON**, `unique_id` `account_auto_update_models`): schaltet den Katalog-Zyklus
+über `set_auto_fetch()` **live** und persistiert via `persist_account_options` —
+**kein** `recalculate_interval()`, kein Entry-Reload (die Konto-Entry hat
+bewusst keinen Update-Listener). Die frühere per-Workspace-Instanz dieses
+Schalters entfällt; ihre Alt-Entities werden entfernt (§13).
 
 ✅ **CG-S1 (geschlossen in 1.0.0):** command_gauge nutzt `auto_update_usage` /
-`auto_update_models` (Icons identisch, unique_id-Suffix kanonisch).
+`auto_update_models` (Icons identisch, unique_id-Suffix kanonisch) — dort
+weiterhin beide auf der jeweiligen Entry, ohne Konto-Split.
 
-### 8.3 Button (1)
+### 8.3 Buttons (2, geteilter `translation_key`)
 
-| translation_key | Icon | unique_id-Suffix | EN-Name |
-|---|---|---|---|
-| `refresh` | `mdi:refresh` | `refresh` | `Refresh` |
+Beide Buttons heißen kanonisch `Refresh` — derselbe `translation_key`
+(`refresh`), getrennt durch **Device** und `unique_id`-Präfix. Ein Klick löst
+jeweils **nur** seinen eigenen Zyklus aus:
 
-Erzwingt sofortigen Refresh **beider** Zyklen (usage + models), unabhängig
-von den Auto-Update-Schaltern. ✅ beide Integrationen identisch.
+| translation_key | Icon | unique_id-Suffix | EN-Name | Ebene | Wirkung |
+|---|---|---|---|---|---|
+| `refresh` | `mdi:refresh` | `refresh` | `Refresh` | Workspace-Device | nur **Usage**-Zyklus (`last_usage_fetch = None` → `async_request_refresh()`) |
+| `refresh` | `mdi:refresh` | `refresh` | `Refresh` | **Konto-Device** (`account_refresh`) | nur **Katalog-Fetch** (`AccountCoordinator.async_fetch_now()`, der einzige HTTP-Pfad der Konto-Entry) |
+
+Der workspace-scoped Button darf **keinen** Katalog-Fetch auslösen (der Katalog
+gehört der Konto-Entry), der Konto-Button **keinen** Usage-Zyklus. Die
+Trennung ist device-scoped: gleicher Anzeigename, unterschiedliche
+`unique_id` (`{entry_id}_refresh` vs. `account_refresh`).
 
 ## 9. Namensschema / Wortstellung
 
@@ -396,3 +487,75 @@ blieben; HA sieht dafür den Reauth-Flow vor (`ConfigEntryAuthFailed` →
 
 **Referenz:** command_gauge **1.2.0** = konforme Referenzimplementierung
 (Reauth vollständig); go_gauge zieht mit **PR #32** nach (gemergt 2026-10-18).
+
+## 13. Konto-ConfigEntry (go_gauge 2.0.0)
+
+Verbindlich für den Master. Seit go_gauge **2.0.0** besitzt die Integration
+**eine** workspace-unabhängige **Konto-ConfigEntry** neben N Workspace-Entries:
+
+| Aspekt | Kanon |
+|---|---|
+| Entry-Art | `data["entry_kind"] == "account"` (Workspaces: `"workspace"`); fehlt der Key, gilt `"workspace"` (Alt-Entries) |
+| `unique_id` | fest `go_gauge_account` (`ACCOUNT_ENTRY_UNIQUE_ID`) + Duplikat-Schutz — genau eine Konto-Entry pro Instanz |
+| Titel | `Go Gauge Konto` (`ENTITY_NAME_ACCOUNT`) = Device-Name; kein Token, kein Secret, kein API-Zugriff beim Anlegen (auth-frei) |
+| Device | `identifiers: {(DOMAIN, "account")}`, `manufacturer: Popoboxxo`, `model: OpenCode Go` |
+| Abgrenzung | **Ersetzt die frühere „Catalog Owner / erste Workspace-Instanz"-Regel ersatzlos** — Konto-Entities hängen an keiner Workspace-Entry mehr |
+| HA-Mindestversion | **2026.8.0** (`hacs.json`); Integration `version` **2.0.0** |
+
+### 13.1 Die 8 Konto-Entities
+
+Alle mit `unique_id`-Präfix **`account_`** (`ACCOUNT_UNIQUE_ID_PREFIX`), alle am
+Konto-Device, keiner Workspace-Entry zugeordnet:
+
+| # | Entity | Plattform | translation_key | unique_id | Kanon-Abschnitt |
+|---|---|---|---|---|---|
+| 1 | Model Catalog | sensor | `model_catalog` | `account_model_catalog` | §6 |
+| 2 | Live Models Count | sensor | `live_models_count` | `account_models_live_count` | §6 |
+| 3 | Cheapest Model | sensor | `cheapest_model` | `account_cheapest_model` | §6 |
+| 4 | Free Models | sensor | `free_models` | `account_free_models` | §6 |
+| 5 | API Reachable | binary_sensor | `api_reachable` | `account_api_reachable` | §5.1 |
+| 6 | Refresh | button | `refresh` | `account_refresh` | §8.3 |
+| 7 | Auto Update Models | switch | `auto_update_models` | `account_auto_update_models` | §8.2 |
+| 8 | Models Refresh (min) | number | `models_refresh_min` | `account_models_refresh_minutes` | §8.1 |
+
+Verteilung: **5 Katalog/Status** (4 Sensoren + 1 Binary-Sensor), **1 Button**,
+**1 Switch**, **1 Number**. Der Template-`unique_id`-Suffix bleibt jeweils der
+nackte Konzept-Token (`model_catalog`, `refresh`, `models_refresh_minutes`, …);
+`account_` ist das Präfix der Konto-Entry, kein Suffix-Bestandteil.
+
+Nicht auf der Konto-Entry (bleiben workspace-lokal): der 7er-Fenstersatz, die
+Fenster-`rate_limited`-Flags, `subscription_active`, `api_status`,
+`warning_threshold`, `pace_red_limit`, `usage_refresh_min`, `auto_update_usage`
+und der workspace-scoped Refresh-Button.
+
+### 13.2 Migration v7 → v8 (Breaking, Historie bleibt)
+
+- **`VERSION` 8 setzt `entry_kind`**: jede migrierte (Workspace-)Entry wird
+  explizit als `workspace` markiert (idempotent via `setdefault`, O(1), kein
+  Registry-/Netz-Zugriff); die Konto-Entry schreibt `account` bereits im
+  Config-Flow.
+- **`entity_id` und History bleiben erhalten** — die Migration legt keine
+  Entity neu an und ändert keine `entity_id`.
+- **`unique_id`-Umschreibung erfolgt im Adoption-Sweep.** Die früher auf einer
+  Workspace-Entry registrierten Katalog-Entities werden auf die kanonischen
+  `account_*`-IDs umgeschrieben (`async_update_entity(new_unique_id=...)`),
+  behalten dabei ihre `entity_id` und werden auf die Konto-Entry und das
+  Konto-Device umgehängt. Kollisionen: ein Gewinner wird adoptiert, ein
+  Verlierer wird neutralisiert (deaktiviert, `unique_id` unangetastet), nicht
+  gelöscht.
+- **Alt-Settings-Entities werden entfernt**: die vormaligen
+  `<workspace>_auto_update_models` / `<workspace>_models_refresh_minutes`
+  werden aus der Entity-Registry entfernt (keine Wertübernahme) — die
+  `account_*`-Settings sind explizit ausgenommen.
+- Reihenfolge ist verbindlich: erst die Entity-ID-Migration (v7), dann die
+  `entry_kind`-Markierung (v8); ein gescheiterter v7-Pass darf nicht auf v8
+  springen.
+
+### 13.3 Abgrenzung command_gauge
+
+**`command_gauge` bleibt unberührt.** Dort gilt weiter **1 Config-Entry = 1
+Konto**: es gibt keine Konto-Entry, keinen Konto-Split, keine
+`account_`-Präfixe und keine v7→v8-Konto-Migration. Die Konto-Entities des
+Kanons (§13.1) sind damit **go_gauge-spezifisch**; command_gauge bildet sie —
+soweit die CommandCode-API es hergibt — auf seiner eigenen Entry ab
+(⚠️ CG-C1/CG-C2 für die Pricing-Sensoren, ⚠️ CG-D1 als Doku-Info).
