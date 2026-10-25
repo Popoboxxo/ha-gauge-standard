@@ -150,6 +150,7 @@ der primäre Weg, der Katalog-Eintrag bleibt optional.
 | CI: HACS Action + hassfest + `pytest`/`ruff`/`mypy`/`check_json_consistency`/`check_canon` (Pflicht), `schedule` + `workflow_dispatch` (empfohlen), kein `ignore:` | ✅ | ⚠️ `schedule` fehlt | — |
 | Releases: SemVer, volles GitHub-Release, `CHANGELOG.md`-Block | ✅ | ⚠️ CHANGELOG-Block vorhanden, Tag-Sync offen | — |
 | Hygiene-Checker (`check_repo_hygiene.py`) | ✅ 0 Fehler / 0 Warnungen | ⚠️ offen (`--warn-only`, Exit 0) | — |
+| Entity-ID-/Namensregel dokumentiert | ✅ | ⚠️ offen (Transition) | — |
 
 **command_gauge: ⚠️ Transition (offen)** — kein Entity-Bruch und **kein
 CG-Eintrag**. Schließungsbedingung: „Hygiene-Contract umgesetzt (README EN/DE,

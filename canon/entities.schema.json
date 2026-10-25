@@ -19,7 +19,14 @@
     "strings_master": "strings.json",
     "translation_files": ["strings.json", "translations/en.json", "translations/de.json"],
     "device_name_pattern": "{Brand} {Scope}",
-    "no_attr_name_literals": true
+    "no_attr_name_literals": true,
+    "entity_id": {
+      "generated_from": "localized_name_and_device",
+      "generated_once": true,
+      "renamed_automatically": false,
+      "part_of_master_name_contract": false,
+      "stable_identity": "unique_id"
+    }
   },
   "device": {
     "identifiers": "{DOMAIN}:{entry_id}",

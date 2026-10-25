@@ -3,8 +3,9 @@
 
 Checks the repository surface defined by ``canon/repository.md`` and
 ``canon/repository.schema.json``: the bilingual README pair, the My-Link,
-the screenshot asset, metadata files, community files, CI gates and the
-version triplet (git tag <-> ``manifest.version`` <-> ``CHANGELOG.md``).
+the screenshot asset, the entity name / entity ID policy, metadata files,
+community files, CI gates and the version triplet (git tag <->
+``manifest.version`` <-> ``CHANGELOG.md``).
 
 Only files are inspected - GitHub settings (description, topics, issue
 switch) cannot be verified from a checkout. The checker works on a plain
@@ -487,6 +488,59 @@ def check_readme(repo: Path, schema: dict, findings: Findings) -> None:
         )
 
 
+def check_entity_id_policy(repo: Path, schema: dict, findings: Findings) -> None:
+    """Check the README entity name / entity ID policy section.
+
+    Opt-in via ``readme.requires_entity_id_policy`` (default ``False``) so the
+    behaviour is unchanged for schemas without the key. Both READMEs must carry
+    an anchored heading from ``readme.entity_id_policy_headings`` and mention
+    every term from ``readme.entity_id_policy_required_terms``
+    (``unique_id``, ``entity_id``) - case-insensitive.
+
+    The English name contract covers canonical names, translation keys and
+    ``unique_id``s; the ``entity_id`` is generated once by Home Assistant from
+    the localized name and is deliberately NOT part of it (canon/entities.md
+    section 9.1). Missing files are skipped: ``check_readme`` already reports
+    them.
+    """
+    cfg = schema.get("readme", {})
+    if not cfg.get("requires_entity_id_policy", False):
+        return
+
+    aliases = cfg.get(
+        "entity_id_policy_headings",
+        ["entity names and entity ids", "entitätsnamen und entity-ids"],
+    )
+    terms = cfg.get(
+        "entity_id_policy_required_terms", ["unique_id", "entity_id"]
+    )
+    alternatives = "|".join(re.escape(alias) for alias in aliases)
+    # No trailing \b: the hyphenated alias ends in a non-word character.
+    heading_regex = re.compile(
+        rf"(?mi)^#{{1,6}}\s*[^\n]*(?:{alternatives})[^\n]*$"
+    )
+
+    for rel in (cfg.get("primary", "README.md"), cfg.get("secondary", "README.de.md")):
+        text = read_text(repo / rel)
+        if text is None:
+            continue  # already reported by check_readme
+        if not heading_regex.search(text):
+            findings.error(
+                f"{rel}: entity name/entity id policy section missing "
+                f"(accepted headings: {aliases})"
+            )
+            # One finding per cause: a missing section is not additionally
+            # reported as a missing required term.
+            continue
+        lowered = text.lower()
+        missing = [term for term in terms if term.lower() not in lowered]
+        if missing:
+            findings.error(
+                f"{rel}: entity name/entity id policy must mention "
+                f"{'/'.join(missing)}"
+            )
+
+
 def check_ci(repo: Path, schema: dict, findings: Findings) -> None:
     """Check the validation workflow tokens, ignored gates and triggers.
 
@@ -617,6 +671,7 @@ def main() -> int:
         check_changelog(repo, manifest, schema, findings)
 
     check_readme(repo, schema, findings)
+    check_entity_id_policy(repo, schema, findings)
     check_ci(repo, schema, findings)
     check_dashboards(repo, schema, findings)
 

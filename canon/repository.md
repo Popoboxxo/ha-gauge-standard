@@ -57,6 +57,7 @@ als Pflicht beschrieben, sind aber nicht maschinell prüfbar.
   | Contributing | Mitwirken |
   | Security | Sicherheit |
   | License | Lizenz |
+  | Entity names and entity IDs | Entitätsnamen und Entity-IDs |
 
   Zusätzlich erwartet: Features, Compatibility (HA-Mindestversion, HACS-
   Generation), Entities, Migration/Upgrade, Dashboards (siehe §8).
@@ -65,6 +66,14 @@ als Pflicht beschrieben, sind aber nicht maschinell prüfbar.
 - `README.md` enthält einen **Custom-Repository-Hinweis** (Suchbegriff
   `custom repository`), damit klar ist, warum die Integration nicht im
   Default-Store erscheint.
+- Beide READMEs enthalten eine **Entity-Namen-/Entity-ID-Policy**
+  (Pflichtabschnitt `Entity names and entity IDs` bzw. `Entitätsnamen und
+  Entity-IDs`): kanonische Namen, Translation-Keys und `unique_id`s sind
+  englisch; die `entity_id` erzeugt Home Assistant einmalig aus dem
+  lokalisierten Anzeigenamen plus Gerätenamen und lässt sie danach stabil.
+  Beispiel-Slugs im README sind Beispiele (keine Automatisierungs-Garantie),
+  ein manuelles Rename ist nicht Teil des Contracts, user-defined
+  Workspace-Präfixe sind zulässig. Details: `canon/entities.md` §9.1.
 
 ## 4. Installation und Distribution
 

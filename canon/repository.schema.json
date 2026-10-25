@@ -85,6 +85,12 @@
     "my_link_note": "Owner, repository and category must sit in the same redirect URL; a bare token match (badge only) is not sufficient.",
     "screenshot_dir": "docs/images/",
     "custom_repository_hint": "custom repositor",
+    "requires_entity_id_policy": true,
+    "entity_id_policy_headings": [
+      "entity names and entity ids",
+      "entitätsnamen und entity-ids"
+    ],
+    "entity_id_policy_required_terms": ["unique_id", "entity_id"],
     "required_headings": {
       "installation": ["installation"],
       "setup": ["setup", "einrichtung"],
