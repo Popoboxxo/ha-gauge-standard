@@ -1,9 +1,20 @@
-# Gauge Entity Canon v1.6.0
+# Gauge Entity Canon v1.7.0
 
 Verbindliche Spezifikation des Entity-Modells aller Gauge-Integrationen
 (`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 2.0.0**.
 Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 (→ Abschnitt „Ausnahmeregelung").
+
+> **Neu in Kanon v1.7.0 (2026-10-25):** Der Kanon wird um einen **getrennten,
+> verbindlichen Repository-Hygiene-/Dokumentations-Contract** ergänzt
+> (`canon/repository.md` + `canon/repository.schema.json`, geprüft von
+> `scripts/check_repo_hygiene.py`). Er regelt ausschließlich die
+> Repository-Oberfläche (README-Paar EN/DE, My-Link, Screenshot, `hacs.json`/
+> `manifest.json`/Brand-Asset, Tag↔Manifest-Sync, Community-Dateien, CI-Gates,
+> Releases). **Der Entity-Inhalt dieses Dokuments bleibt unverändert**
+> (Master `go_gauge` 2.0.0, `master.version` 2.0.0; go_gauge 2.0.2 ist rein
+> Doku/Metadaten). `command_gauge` ist im Hygiene-Contract **⚠️ offen**
+> (Transition) — **kein Entity-Bruch und kein neuer CG-Eintrag**.
 
 > **Neu in Kanon v1.6.0 (2026-10-25):** Der Kanon hebt den Konto-Vertrag auf eine
 > **eigene Konto-ConfigEntry** (go_gauge **2.0.0**). Anlass: Der bisherige Text

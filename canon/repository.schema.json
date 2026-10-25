@@ -1,0 +1,145 @@
+{
+  "canon_version": "1.7.0",
+  "stand": "2026-10-25",
+  "scope": "Repository hygiene and documentation contract for Gauge integrations; applies in addition to the entity canon (canon/entities.md).",
+  "applies_to": ["go_gauge", "command_gauge"],
+  "distribution": {
+    "custom_repository": "required",
+    "catalog": "optional",
+    "my_link_parameter": "hacs_repository",
+    "my_link_future_parameter": "marketplace_repository"
+  },
+  "required_root_files": [
+    "README.md",
+    "README.de.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "hacs.json",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "CODE_OF_CONDUCT.md"
+  ],
+  "community_files": {
+    "required": [
+      "CONTRIBUTING.md",
+      "SECURITY.md",
+      "CODE_OF_CONDUCT.md"
+    ],
+    "must_be_non_empty": true
+  },
+  "github_files": {
+    "issue_templates": [
+      ".github/ISSUE_TEMPLATE/bug_report.yml",
+      ".github/ISSUE_TEMPLATE/feature_request.yml",
+      ".github/ISSUE_TEMPLATE/config.yml"
+    ],
+    "pull_request_template": ".github/PULL_REQUEST_TEMPLATE.md",
+    "codeowners": ".github/CODEOWNERS",
+    "dependabot": ".github/dependabot.yml",
+    "workflow": ".github/workflows/validate.yml"
+  },
+  "hacs": {
+    "file": "hacs.json",
+    "required_keys": ["name", "homeassistant"],
+    "forbidden_keys": ["render_readme"],
+    "warning_keys": ["zip_release", "hide_default_branch"],
+    "warning_keys_note": "Optional legacy switches are allowed when the release process needs them; the checker reports them as WARNING so the justification stays visible (render_readme stays an ERROR)."
+  },
+  "manifest": {
+    "path": "custom_components/{domain}/manifest.json",
+    "required_keys": [
+      "domain",
+      "name",
+      "version",
+      "documentation",
+      "issue_tracker",
+      "codeowners",
+      "config_flow",
+      "integration_type",
+      "iot_class"
+    ],
+    "optional_keys": {
+      "categories": {
+        "type": "list",
+        "min_items": 1,
+        "max_items": 3,
+        "items_unique": true,
+        "note": "Only once the shipped hassfest accepts the key; hassfest 2026.10 rejects it, the HACS warning is non-blocking."
+      }
+    },
+    "version_matches_git_tag": true
+  },
+  "brand": {
+    "icon": "custom_components/{domain}/brand/icon.png",
+    "width": 256,
+    "height": 256,
+    "format": "png"
+  },
+  "readme": {
+    "primary": "README.md",
+    "secondary": "README.de.md",
+    "language_switcher": "[English](README.md) | [Deutsch](README.de.md)",
+    "min_bytes_primary": 5000,
+    "my_link_redirect_regex": "my\\.home-assistant\\.io/redirect/(?:hacs|marketplace)_repository/\\?[^)\\s]*owner=[^&\\s]+[^)\\s]*repository=[^&\\s]+",
+    "my_link_required_query": ["category=integration"],
+    "my_link_note": "Owner, repository and category must sit in the same redirect URL; a bare token match (badge only) is not sufficient.",
+    "screenshot_dir": "docs/images/",
+    "custom_repository_hint": "custom repositor",
+    "required_headings": {
+      "installation": ["installation"],
+      "setup": ["setup", "einrichtung"],
+      "troubleshooting": ["troubleshooting", "faq", "problembehebung"],
+      "diagnostics": ["diagnostics", "diagnose"],
+      "support": ["support"],
+      "contributing": ["contributing", "mitwirken"],
+      "security": ["security", "sicherheit"],
+      "license": ["license", "lizenz"]
+    }
+  },
+  "ci": {
+    "file": ".github/workflows/validate.yml",
+    "required_tokens": [
+      "hacs/action",
+      "hassfest",
+      "pytest",
+      "ruff",
+      "mypy",
+      "check_json_consistency",
+      "check_canon"
+    ],
+    "forbidden_keys": ["ignore"],
+    "warning_if_missing": ["schedule:", "workflow_dispatch:"],
+    "severity": {
+      "required_tokens": "error",
+      "forbidden_keys": "error",
+      "warning_if_missing": "warning"
+    },
+    "severity_note": "Tool gates are mandatory (missing token = ERROR); the recommended triggers are advisory (missing = WARNING). Matching is a case-sensitive substring match."
+  },
+  "releases": {
+    "changelog": "CHANGELOG.md",
+    "semver": true,
+    "full_github_release": true,
+    "tag_manifest_sync": true,
+    "tag_unavailable_is_warning": true
+  },
+  "catalog": {
+    "optional": true,
+    "supported": true,
+    "custom_repository_supported": true,
+    "no_default_store_claim_without_listing": true
+  },
+  "dashboards_docs": {
+    "optional": true,
+    "files": ["docs/dashboards/README.md", "docs/dashboards/README.en.md"],
+    "missing_is_warning": true
+  },
+  "checker": {
+    "script": "scripts/check_repo_hygiene.py",
+    "version": "1.7.0",
+    "exit_codes": {
+      "0": "no errors (warn-only downgrades every finding)",
+      "1": "error or unreadable repository path"
+    }
+  }
+}

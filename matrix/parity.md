@@ -1,7 +1,9 @@
 # Gauge Parity-Matrix (Pflegedatei)
 
-Stand: 2026-10-25 · Kanon **v1.6.0** (`canon/entities.md`, Master = go_gauge **2.0.0**,
-Konto-ConfigEntry + `account_`-Präfix) ·
+Stand: 2026-10-25 · Kanon **v1.7.0** (Entity-Kanon `canon/entities.md` v1.7.0,
+Entity-Inhalt unverändert seit v1.6.0 + Repository-Hygiene
+`canon/repository.md` v1.7.0; Master = go_gauge **2.0.0** für
+Entities, **2.0.2** für Hygiene; Konto-ConfigEntry + `account_`-Präfix) ·
 Konvergenz-Ziel: command_gauge **1.2.0** (Kanon-Konvergenz + `api_status`, korrigiertes synthetisches Monatsfenster).
 
 **Legende:** ✅ = Kanon erfüllt · ⚠️ = registrierte Abweichung (mit Kanon-ID und
@@ -128,6 +130,31 @@ Workspace-Modell-Settings (`*_auto_update_models`,
 | EN-Master, Fenster-Placeholder **vorn** (`{window} Usage`) | ✅ | ✅ | ✅ |
 | `strings.json` + `translations/{en,de}.json` vollständig | ✅ | ✅ | ✅ |
 | `Burn-Rate`-Schreibweise EN | ✅ | ✅ | ✅ |
+
+## Repository-Hygiene (v1.7.0)
+
+Gilt **zusätzlich** zum Entity-Kanon (`canon/repository.md`); keine Entity-,
+`unique_id`- oder Übersetzungsänderung. Custom Repository über den My-Link ist
+der primäre Weg, der Katalog-Eintrag bleibt optional.
+
+| Aspekt | go_gauge 2.0.2 | command_gauge | Status |
+|---|---|---|---|
+| README-Paar EN/DE, identischer Language Switcher in Zeile 1 | ✅ | ⚠️ nur `README.md` | — |
+| My-Link (`hacs_repository` + Badge) | ✅ | ⚠️ fehlt | — |
+| Screenshot unter `docs/images/`, aus README referenziert | ✅ | ⚠️ fehlt | — |
+| `hacs.json` (`name`, `homeassistant`, **kein** `render_readme`; `zip_release`/`hide_default_branch` nur mit Begründung) | ✅ | ⚠️ `render_readme` + `zip_release` vorhanden | — |
+| `manifest.json` (domain/name/version/documentation/issue_tracker/codeowners/config_flow/integration_type/iot_class) | ✅ | ✅ | — |
+| `brand/icon.png` (PNG, 256×256) | ✅ | ✅ | — |
+| Tag ↔ `manifest.version` synchron | ✅ `v2.0.2` ↔ `2.0.2` | ⚠️ Tag `v1.2.0` ↔ `2.0.0` | — |
+| Community-Dateien (Issue-/PR-Templates, CONTRIBUTING, SECURITY, CoC, CODEOWNERS, Dependabot) | ✅ | ⚠️ fehlen | — |
+| CI: HACS Action + hassfest + `pytest`/`ruff`/`mypy`/`check_json_consistency`/`check_canon` (Pflicht), `schedule` + `workflow_dispatch` (empfohlen), kein `ignore:` | ✅ | ⚠️ `schedule` fehlt | — |
+| Releases: SemVer, volles GitHub-Release, `CHANGELOG.md`-Block | ✅ | ⚠️ CHANGELOG-Block vorhanden, Tag-Sync offen | — |
+| Hygiene-Checker (`check_repo_hygiene.py`) | ✅ 0 Fehler / 0 Warnungen | ⚠️ offen (`--warn-only`, Exit 0) | — |
+
+**command_gauge: ⚠️ Transition (offen)** — kein Entity-Bruch und **kein
+CG-Eintrag**. Schließungsbedingung: „Hygiene-Contract umgesetzt (README EN/DE,
+Templates, Community-Dateien, Checker grün)“. Bis dahin läuft der Checker mit
+`--warn-only`.
 
 ## Verfahren (unverändert)
 
