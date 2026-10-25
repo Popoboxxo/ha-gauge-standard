@@ -14,7 +14,7 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 | Aspekt | Festlegung |
 |---|---|
 | **Single Source of Truth** | `canon/entities.md` (menschlich lesbar) + `canon/entities.schema.json` (maschinenlesbar) definieren verbindlich, wie Gauge-Entities heißen und aussehen. |
-| **Master/Stil-Referenz** | [`ha-go-gauge`](https://github.com/Popoboxxo/ha-go-gauge) — wo sich Integrationen unterscheiden, gilt `go_gauge` **1.6.0** als Kanon-Entscheidung, sofern unten nicht anders festgelegt. |
+| **Master/Stil-Referenz** | [`ha-go-gauge`](https://github.com/Popoboxxo/ha-go-gauge) — wo sich Integrationen unterscheiden, gilt `go_gauge` **2.0.0** als Kanon-Entscheidung, sofern unten nicht anders festgelegt. |
 | **Consumer** | [`ha-go-gauge`](https://github.com/Popoboxxo/ha-go-gauge) (`go_gauge`) und [`ha-command-gauge`](https://github.com/Popoboxxo/ha-command-gauge) (`command_gauge`). `command_gauge` ist das aktive **Konvergenz-Ziel**. |
 | **Paar-Change-Pflicht** | Jede Kanon-Änderung ist ein **Paar-Change**: sie wird in beiden Integrationen umgesetzt (soweit die jeweilige API hergibt) — nie nur in einem Repo. |
 | **Ausnahmen** | Domain-begründete Divergenz ist nur mit ⚠️-Eintrag im Kanon erlaubt, inkl. Begründung und **Schließungsbedingung** (*closing condition*). |
@@ -23,7 +23,7 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 
 ```
 canon/
-  entities.md          # verbindlicher Kanon v1.5.0 (menschenlesbar, Deutsch)
+  entities.md          # verbindlicher Kanon v1.6.0 (menschenlesbar, Deutsch)
   entities.schema.json # maschinenlesbare Version (prüfbar)
 scripts/
   check_canon.py       # Prüft eine Integration gegen entities.schema.json
@@ -89,8 +89,29 @@ CI (`canon.yml`) additionally runs the Checker against both Consumer-Repos.
 
 ## Status
 
-Kanon **v1.5.0** — abgeleitet aus `go_gauge` 1.6.0 (Master). Neu in v1.5.0:
-Der Kanon regelt normativ den **Config-Flow für die Token-Erneuerung (Reauth)**
+Kanon **v1.6.0** — abgeleitet aus `go_gauge` **2.0.0** (Master). Neu in v1.6.0:
+Der Kanon hebt den Konto-Vertrag auf eine **eigene Konto-ConfigEntry**
+(`canon/entities.md` §13). Anlass: Der bisherige Text beschrieb die
+Konto-Entities als „Catalog Owner / erste Workspace-Instanz" — real besitzt
+go_gauge seit 2.0.0 eine workspace-unabhängige Konto-Entry
+(`entry_kind: "account"`, `unique_id: go_gauge_account`, Device `Go Gauge Konto`
+mit `identifiers: {(DOMAIN, "account")}`); die Catalog-Owner-Regel entfällt
+ersatzlos. Verbindlich sind damit **8 Konto-Entities** mit `unique_id`-Präfix
+`account_` (5 Katalog/Status + Button + Switch + Number), ein **accountweiter,
+evidenz-/TTL-basierter** `api_reachable` (Tri-State: frischer Erfolg → ON,
+neutrale Antwort `no_subscription`/`auth_error` → unknown, nur frische Fehler →
+OFF, keine frische Evidenz → unknown; TTL 2× Konto-Intervall / 3×
+Usage-Intervall), der **device-scoped Refresh-Split** (geteilter
+`translation_key` `refresh`: Workspace = nur Usage-Zyklus, Konto = nur
+Katalog-Fetch) und die **globalen Modell-Settings** auf der Konto-Entry
+(`auto_update_models` Default ON, `models_refresh_min` 1–1440 / Default 60).
+HA-Mindestversion **2026.8.0**; Migration **v7 → v8** setzt `entry_kind`, die
+`unique_id`-Umschreibung erfolgt im Adoption-Sweep, Alt-Settings-Entities
+werden entfernt — `entity_id`/History bleiben erhalten. `command_gauge` bleibt
+**unberührt** (1 Entry = 1 Konto, kein Konto-Split). Kein neuer ⚠️-Eintrag —
+CG-D1 bleibt als Doku-Info (command_gauge ohne Konto-Entry) bestehen.
+Neu in v1.5.0: Der Kanon regelt normativ den **Config-Flow für die
+Token-Erneuerung (Reauth)**
 (`canon/entities.md` §12): 401 → `ConfigEntryAuthFailed` (typisierter Auth-Status,
 kein transienter Netzwerkfehler), `async_step_reauth` → `async_step_reauth_confirm`
 mit Austausch **nur** des Secrets (`unique_id`/`entry_id` unverändert),
