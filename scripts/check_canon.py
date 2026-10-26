@@ -61,6 +61,14 @@ class ClassInfo:
             r"(?:min_value|_minimum)\s*=\s*(\d+)")
         self.max_value = self._int_or_none(
             r"(?:max_value|_maximum)\s*=\s*(\d+)")
+        self.step = self._int_or_none(
+            r"_attr_native_step\s*=\s*(\d+)") or self._int_or_none(
+            r"\bstep\s*=\s*(\d+)")
+        m = re.search(r"_attr_mode\s*=\s*(?:NumberMode\.)?(\w+)", body)
+        self.mode = m.group(1).lower() if m else None
+        m = re.search(r"_attr_entity_category\s*=\s*\w*EntityCategory\.(\w+)",
+                      body)
+        self.entity_category = m.group(1).lower() if m else None
         self.default_value = self._default_value()
         self.unique_suffix = self._resolve_suffix()
 
@@ -113,7 +121,7 @@ class ClassInfo:
         return int(m.group(1)) if m else None
 
     def _default_value(self) -> int | None:
-        m = (re.search(r"_attr_default_value\s*=\s*(\d+|[A-Z][A-Z0-9_]*)", self.body)
+        m = (re.search(r"_attr_(?:native_)?default_value\s*=\s*(\d+|[A-Z][A-Z0-9_]*)", self.body)
              or re.search(r"def\s+_default_value\s*\([^)]*\)\s*(?:->[^:]+)?:\s*return\s+(\d+|[A-Z][A-Z0-9_]*)", self.body)
              or re.search(r'getattr\([^,]+,\s*"[^"]*"\s*,\s*(\d+|[A-Z][A-Z0-9_]*)\s*\)', self.body))
         if not m:
@@ -259,12 +267,56 @@ def main() -> int:
         entry = (entity_id, aspect)
         if entry in deviations:
             dev = deviations[entry]
-            warnings.append(
-                f"⚠️  [{entity_id}/{aspect}] {detail}\n"
-                f"    registered deviation: {dev['reason']}\n"
-                f"    closing condition: {dev['closing']}")
+            line = (f"⚠️  [{entity_id}/{aspect}] {detail}\n"
+                    f"    registered deviation: {dev['reason']}\n"
+                    f"    closing condition: {dev['closing']}")
+            if line not in warnings:
+                warnings.append(line)
         else:
-            errors.append(f"[{entity_id}/{aspect}] {detail}")
+            line = f"[{entity_id}/{aspect}] {detail}"
+            if line not in errors:
+                errors.append(line)
+
+    def check_mode_step(info: ClassInfo, classes: dict[str, ClassInfo],
+                       spec: dict, entity_id: str) -> None:
+        """mode/step of a Number entity (D16 hardening)."""
+        if "mode" in spec:
+            actual_mode = resolve_str(info, classes, "mode")
+            if actual_mode != spec["mode"]:
+                report(entity_id, "mode",
+                       f"mode '{actual_mode}' != canon '{spec['mode']}'")
+        if "step" in spec:
+            actual_step = resolve_range(info, classes, "step")
+            if actual_step != spec["step"]:
+                report(entity_id, "step",
+                       f"step {actual_step} != canon {spec['step']}")
+
+    def check_default(info: ClassInfo, classes: dict[str, ClassInfo],
+                      spec: dict, entity_id: str) -> None:
+        """Default value; ``default_required`` rejects an unresolvable one."""
+        actual_default = resolve_range(info, classes, "default_value")
+        if actual_default is None:
+            if spec.get("default_required"):
+                report(entity_id, "settings_default",
+                       "default not statically resolvable")
+        elif "default" in spec and actual_default != spec["default"]:
+            report(entity_id, "settings_default",
+                   f"default {actual_default} != canon {spec['default']}")
+
+    def check_entity_category(info: ClassInfo, classes: dict[str, ClassInfo],
+                              spec: dict, entity_id: str) -> None:
+        """Canon value: a string must match, ``None`` forbids any category."""
+        if "entity_category" not in spec:
+            return
+        actual_cat = resolve_str(info, classes, "entity_category")
+        canon_cat = spec["entity_category"]
+        if canon_cat is None:
+            if actual_cat is not None:
+                report(entity_id, "entity_category",
+                       f"entity_category '{actual_cat}' set but canon says none")
+        elif actual_cat != canon_cat:
+            report(entity_id, "entity_category",
+                   f"entity_category '{actual_cat}' != canon '{canon_cat}'")
 
     deviations = {
         (d["id"], d["aspect"]): d
@@ -346,10 +398,12 @@ def main() -> int:
                 report(eid, "name_pattern",
                        f"en name '{en_name}' != canon '{entity['name_en']}'")
 
+        platform_classes = classes_by_platform.get(platform, {})
         if "unit" in entity and entity["unit"] is not None:
-            if info.unit != entity["unit"]:
+            actual_unit = resolve_str(info, platform_classes, "unit")
+            if actual_unit != entity["unit"]:
                 report(eid, "unit",
-                       f"unit '{info.unit}' != canon '{entity['unit']}'")
+                       f"unit '{actual_unit}' != canon '{entity['unit']}'")
         if entity.get("device_class") and info.device_class != entity["device_class"]:
             report(eid, "device_class",
                    f"device_class '{info.device_class}' != canon "
@@ -358,7 +412,6 @@ def main() -> int:
             report(eid, "state_class",
                    f"state_class '{info.state_class}' != canon "
                    f"'{entity['state_class']}'")
-        platform_classes = classes_by_platform.get(platform, {})
         if "unit" in entity and entity["unit"] is None:
             actual_unit = resolve_str(info, platform_classes, "unit")
             if actual_unit is not None:
@@ -390,6 +443,10 @@ def main() -> int:
         if missing_attrs:
             report(eid, "attributes",
                    f"extra_state_attributes missing: {sorted(missing_attrs)}")
+        if platform == "number":
+            check_mode_step(info, platform_classes, entity, eid)
+        check_default(info, platform_classes, entity, eid)
+        check_entity_category(info, platform_classes, entity, eid)
 
     # --- settings ranges (numbers) ----------------------------------------
     for key, spec in schema.get("settings_ranges", {}).items():
@@ -409,10 +466,9 @@ def main() -> int:
             report(key, "settings_range",
                    f"range {actual_min}..{actual_max} != canon "
                    f"{spec['min']}..{spec['max']}")
-        actual_default = resolve_range(info, classes, "default_value")
-        if actual_default is not None and actual_default != spec["default"]:
-            report(key, "settings_default",
-                   f"default {actual_default} != canon {spec['default']}")
+        check_mode_step(info, classes, spec, key)
+        check_default(info, classes, spec, key)
+        check_entity_category(info, classes, spec, key)
 
     # --- windows ------------------------------------------------------------
     if const_py.is_file():

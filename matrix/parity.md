@@ -1,16 +1,18 @@
 # Gauge Parity-Matrix (Pflegedatei)
 
-Stand: 2026-10-25 · Kanon **v1.6.0** (`canon/entities.md`, Master = go_gauge **2.0.0**,
-Konto-ConfigEntry + `account_`-Präfix) ·
+Stand: 2026-10-26 · Kanon **v1.7.0** (`canon/entities.md`, Master = go_gauge **2.1.0**,
+Konto-ConfigEntry + `account_`-Präfix, Burn-Lookback aktiviert) ·
 Konvergenz-Ziel: command_gauge **1.2.0** (Kanon-Konvergenz + `api_status`, korrigiertes synthetisches Monatsfenster).
 
 **Legende:** ✅ = Kanon erfüllt · ⚠️ = registrierte Abweichung (mit Kanon-ID und
 Schließungsbedingung) · ❌ = unregistrierte Abweichung = Fehler · — = existiert
 nicht (domain-seitig begründet).
 
-Checker-Ergebnisse (Stand 2026-10-25):
+Checker-Ergebnisse (Stand 2026-10-26):
 `check_canon.py` → go_gauge: **0 Fehler / 0 Warnungen** (Referenz = grün) ·
-command_gauge: **0 Fehler / 8 registrierte Warnungen** (Exit 0).
+command_gauge: **15 registrierte Warnungen**, **0 Fehler** — die D22-Diagnose-
+Attribute (`forecast`, `pace`, `burn_rate`) sind als ⚠️ CG-C3 registriert, bis
+der Paar-Change in command_gauge sie liefert.
 
 ## Device-Topologie
 
@@ -28,11 +30,11 @@ command_gauge: **0 Fehler / 8 registrierte Warnungen** (Exit 0).
 |---|---|---|---|
 | `usage` (% · MEASUREMENT · suffix `percent` · Status/Attribute) | ✅ | ✅ (`None` bei no_subscription/error, shield-off-Icon, Attribute) | ✅ |
 | `reset` (TIMESTAMP) | ✅ | ✅ | ✅ |
-| `forecast` (%, MEASUREMENT) | ✅ | ✅ | ✅ |
-| `pace` (Ampel + Attribute) | ✅ | ✅ | ✅ |
+| `forecast` (%, MEASUREMENT) | ✅ + D22-Attribute | ✅ (ohne D22-Attribute: ⚠️ CG-C3) | ⚠️ CG-C3 |
+| `pace` (Ampel + Attribute) | ✅ + D22-Attribute | ✅ (ohne D22-Attribute: ⚠️ CG-C3) | ⚠️ CG-C3 |
 | `remaining` (%) | ✅ | ✅ | ✅ |
 | `time_to_reset` (DURATION, h) | ✅ | ✅ | ✅ |
-| `burn_rate` (%/h) | ✅ | ✅ | ✅ |
+| `burn_rate` (%/h) | ✅ (OLS + Lookback-Attribute) | ✅ (ohne Lookback-Attribute: ⚠️ CG-C3) | ⚠️ CG-C3 |
 | Fenster | ✅ 5h/week/month (API) | ✅ 5h/week (API) + month **synthetisch** ⚠️ CG-M1 | ✅ |
 
 ## Scope-Status (je Scope)
@@ -120,17 +122,22 @@ Workspace-Modell-Settings (`*_auto_update_models`,
 | `auto_update_models` | ✅ **global auf der Konto-Entry** (`account_auto_update_models`, Default ON, `set_auto_fetch` + `persist_account_options`, kein Reload) | ✅ (Entry-lokal) | ✅ |
 | `refresh` (workspace) | ✅ nur Usage-Zyklus | ✅ | ✅ |
 | `refresh` (Konto) | ✅ `account_refresh`, nur Katalog-Fetch | ✅ (eigene Entry) | ✅ |
-| `burn_lookback_5h` (min · 15–300 · slider · `mdi:history`) | geplant (2.1.0 / canon 1.7.0) | geplant (⚠️ CG-N5 / CG-B6) | geplant |
-| `burn_lookback_week` (min · 60–10080 · slider · `mdi:history`) | geplant (2.1.0 / canon 1.7.0) | geplant (⚠️ CG-N5 / CG-B6) | geplant |
-| `burn_lookback_month` (min · 60–10080 · slider · `mdi:history`) | geplant (2.1.0 / canon 1.7.0) | geplant (⚠️ CG-N5 / CG-B6) | geplant |
-| `reset_burn_lookbacks` (button · `mdi:restore` · diagnostic) | geplant (2.1.0 / canon 1.7.0) | geplant (⚠️ CG-N5 / CG-B6) | geplant |
+| `burn_lookback_5h` (min · 15–300 · slider · `mdi:history`) | ✅ aktiv (2.1.0), `entity_category: config`, Step 5 | ⚠️ CG-N5 | ⚠️ |
+| `burn_lookback_week` (min · 60–10080 · slider · `mdi:history`) | ✅ aktiv (2.1.0), `entity_category: config`, Step 60 | ⚠️ CG-N5 | ⚠️ |
+| `burn_lookback_month` (min · 60–10080 · slider · `mdi:history`) | ✅ aktiv (2.1.0), `entity_category: config`, Step 60 | ⚠️ CG-N5 | ⚠️ |
+| `reset_burn_lookbacks` (button · `mdi:restore` · diagnostic) | ✅ aktiv (2.1.0), `unique_id` `burn_lookback_reset` | ⚠️ CG-B6 | ⚠️ |
 
-**Geplant in Kanon v1.7.0 (`phase: reserved`):** Die drei Burn-Lookback-Numbers
-und der Reset-Button sind in Kanon 1.6.0 nur als `domain_extensions` reserviert
-(§8.4) und stehen **nicht** in der `entities`-Liste; go_gauge **2.1.0**
-implementiert sie, command_gauge zieht nach (⚠️ CG-N5 / CG-B6 noch nicht
-registriert, daher `geplant` statt ⚠️). Ebenso geplant: das echte
-Kalendermonat aus `resetsAt` (§2).
+**Aktiv in Kanon v1.7.0 (go_gauge 2.1.0):** Die drei Burn-Lookback-Numbers und der
+Reset-Button sind jetzt **Core-Entities** (§8.4, `entities`-Liste statt
+`domain_extensions`) und damit prüfpflichtig — inklusive `mode: slider`, `step`
+(5/60/60), `default` (120/720/2880), `entity_category` (`config` bzw. `diagnostic`)
+und `unique_id`-Suffixen (`burn_lookback_*_minutes`, `burn_lookback_reset`). Der
+Checker prüft `mode`/`step`/`default`/`entity_category` statisch (D16). Ebenfalls
+aktiv: das **echte Kalendermonat** aus `resetsAt` (§2) und die D22-Diagnose-Attribute
+(`burn_rate`: `lookback_minutes`/`samples`/`lookback_too_short`; `forecast`/`pace`:
+`forecast_recent`/`forecast_method`/`elapsed_fraction`/`window_seconds`).
+command_gauge hat die vier Entities noch nicht (⚠️ CG-N5 / ⚠️ CG-B6) und liefert die
+D22-Attribute ebenfalls noch nicht (⚠️ CG-C3, offener Paar-Change).
 
 ## Namen / Wortstellung
 
@@ -176,6 +183,20 @@ Kalendermonat aus `resetsAt` (§2).
 | CG-N2 | `pace_red_limit` Range 1–1000 | domain-begründet, entfällt |
 | CG-N3 | `usage_refresh_min` Min 5 | domain-begründet (Fair-Use), entfällt |
 | CG-N4 | `models_refresh_min` Min 60 | domain-begründet (Fair-Use), entfällt |
+| CG-N5 | Burn-Lookback-Numbers fehlen (`burn_lookback_5h`/`week`/`month`) | command_gauge liefert die drei Number-Entities |
+| CG-B6 | Reset-Button `reset_burn_lookbacks` fehlt | command_gauge liefert den Reset-Button |
+| CG-C3 | D22-Attribute an `forecast`/`pace` (`forecast_recent`/`forecast_method`/`elapsed_fraction`/`window_seconds`) und `burn_rate` (`lookback_minutes`/`samples`/`lookback_too_short`) fehlen | command_gauge liefert die Diagnose-Attribute |
+
+**In v1.7.0 (go_gauge 2.1.0):** Burn-Lookback aktiviert — die drei
+Number-Slider (`entity_category: config`, Steps 5/60/60, Defaults 120/720/2880)
+und der Reset-Button (`entity_category: diagnostic`, `unique_id`
+`burn_lookback_reset`) sind Core-Entities (§8.4). Zusätzlich verbindlich: die
+Burn-Rate als **OLS-Steigung** über das Lookback-Fenster, die D22-Diagnose-Attribute
+(`burn_rate`, `forecast`, `pace`) und das **echte Kalendermonat** aus `resetsAt`
+(§2). Der Checker prüft `mode`/`step`/`default`/`entity_category` statisch (D16).
+command_gauge: ⚠️ **CG-N5** (drei Numbers), ⚠️ **CG-B6** (Reset-Button) und
+⚠️ **CG-C3** (D22-Attribute) registriert — der Paar-Change steht dort noch aus,
+der Checker bleibt damit bei **0 Fehlern**.
 
 **In v1.6.0 (go_gauge 2.0.0):** Konto-Vertrag auf die eigene Konto-ConfigEntry
 gehoben (Kanon §13) — 8 Konto-Entities mit `account_`-Präfix, `api_reachable`
