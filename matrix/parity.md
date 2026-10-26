@@ -120,6 +120,17 @@ Workspace-Modell-Settings (`*_auto_update_models`,
 | `auto_update_models` | ✅ **global auf der Konto-Entry** (`account_auto_update_models`, Default ON, `set_auto_fetch` + `persist_account_options`, kein Reload) | ✅ (Entry-lokal) | ✅ |
 | `refresh` (workspace) | ✅ nur Usage-Zyklus | ✅ | ✅ |
 | `refresh` (Konto) | ✅ `account_refresh`, nur Katalog-Fetch | ✅ (eigene Entry) | ✅ |
+| `burn_lookback_5h` (min · 15–300 · slider · `mdi:history`) | geplant (2.1.0 / canon 1.7.0) | geplant (⚠️ CG-N5 / CG-B6) | geplant |
+| `burn_lookback_week` (min · 60–10080 · slider · `mdi:history`) | geplant (2.1.0 / canon 1.7.0) | geplant (⚠️ CG-N5 / CG-B6) | geplant |
+| `burn_lookback_month` (min · 60–10080 · slider · `mdi:history`) | geplant (2.1.0 / canon 1.7.0) | geplant (⚠️ CG-N5 / CG-B6) | geplant |
+| `reset_burn_lookbacks` (button · `mdi:restore` · diagnostic) | geplant (2.1.0 / canon 1.7.0) | geplant (⚠️ CG-N5 / CG-B6) | geplant |
+
+**Geplant in Kanon v1.7.0 (`phase: reserved`):** Die drei Burn-Lookback-Numbers
+und der Reset-Button sind in Kanon 1.6.0 nur als `domain_extensions` reserviert
+(§8.4) und stehen **nicht** in der `entities`-Liste; go_gauge **2.1.0**
+implementiert sie, command_gauge zieht nach (⚠️ CG-N5 / CG-B6 noch nicht
+registriert, daher `geplant` statt ⚠️). Ebenso geplant: das echte
+Kalendermonat aus `resetsAt` (§2).
 
 ## Namen / Wortstellung
 
