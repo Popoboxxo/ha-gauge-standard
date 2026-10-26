@@ -1,10 +1,18 @@
-# Gauge Entity Canon v1.7.0
+# Gauge Entity Canon v1.8.0
 
 Verbindliche Spezifikation des Entity-Modells aller Gauge-Integrationen
 (`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 2.1.0**.
 Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 (→ Abschnitt „Ausnahmeregelung").
 
+> **Neu in Kanon v1.8.0 (2026-10-27):** Verbindliche **Entity-Kategorie-Policy**
+> (§8.0). Settings-Numbers und Auto-Update-Switches sind `entity_category:
+> config`; der Reset-Button bleibt `diagnostic`; Primärdaten und
+> Refresh-Aktionen bleiben `null`. Die Kategorien sind reine UI-/Registry-
+> Metadaten (kein `unique_id`-, `entity_id`-, State- oder Historienbruch).
+> Übergang: Der Checker erzwingt die neuen Werte für die bestehenden Settings
+> erst, sobald beide Consumer nachgezogen sind (Schema-Phase B).
+>
 > **Neu in Kanon v1.7.0 (2026-10-26):** Aktivierung der in 1.6.0 nur
 > reservierten Burn-Lookback-Settings. Anlass: go_gauge **2.1.0** implementiert
 > die drei **Burn-Lookback-Number-Entities**
@@ -371,12 +379,34 @@ nachgebildet).
 
 ## 8. Settings-Entities
 
+### 8.0 Entity-Kategorien (verbindlich seit Canon 1.8.0)
+
+Home Assistant kennt genau drei Werte: `null`, `config` und `diagnostic`.
+Kategorien gruppieren Entities im UI (Configuration bzw. Diagnostics); sie
+ändern **weder** `unique_id`/`entity_id` **noch** State, Historie oder
+Automationen. Es gibt **keine** eigenen Kategorien für Zeitfenster
+(Stunden/Woche/Monat) — diese Trennung erfolgt ausschließlich über
+Translation-Key und Anzeigename.
+
+| Kategorie | Verwendung | Entities |
+|---|---|---|
+| `config` | Nutzer konfiguriert Verhalten der Integration | alle Settings-Numbers (`warning_threshold`, `pace_red_limit`, `usage_refresh_min`, `models_refresh_min`, `burn_lookback_*`), beide Auto-Update-Switches |
+| `diagnostic` | Reparatur-/Troubleshooting-Aktion | `reset_burn_lookbacks` |
+| `null` | Primärdaten und Alltagsaktionen | alle Sensoren/Binary-Sensoren, `subscription_active`, `api_status`, `api_reachable`, `model_catalog`, Credits-Sensoren, beide `refresh`-Buttons |
+
+**Nicht-Ziele:** keine Device-Aufteilung nach Zeitfenstern, kein
+`entity_registry_enabled_default=False` nur wegen `diagnostic`, keine
+Custom-Kategorien. Bestehende Installationen behalten `entity_id` und
+Historie; die Entities wandern lediglich im UI in den Configuration-/
+Diagnostics-Bereich.
+
 ### 8.1 Numbers (4) — Wertebereiche sind Kanon (go_gauge-Werte)
 
-Alle: `NumberMode.BOX`, `native_step = 1`, `entity_category` **nicht gesetzt**
-(`null`), Unit wie angegeben, sofort wirksam + persistent via `persist_options`
-(ohne Entry-Reload). `mode`/`step`/`entity_category` sind seit Kanon 1.7.0
-maschinell geprüft (D16).
+Alle: `NumberMode.BOX`, `native_step = 1`, **`entity_category: config`**, Unit
+wie angegeben, sofort wirksam + persistent via `persist_options` (ohne
+Entry-Reload). `mode`/`step`/`entity_category` sind seit Kanon 1.7.0
+maschinell geprüft (D16); die Kategorie wird mit Kanon 1.8.0 für die
+bestehenden Settings verbindlich (§8.0).
 
 | # | translation_key | Unit | Min | Max | Default | Icon | unique_id-Suffix | EN-Name | Ebene |
 |---|---|---|---|---|---|---|---|---|---|
@@ -409,6 +439,8 @@ Kanon-Keys `warning_threshold`, `pace_red_limit`, `usage_refresh_min`,
 (CommandCode-API-Fair-Use). *Schließung:* entfällt (domain-begründet).
 
 ### 8.2 Switches (2)
+
+Alle: **`entity_category: config`** (§8.0).
 
 | translation_key | Icon | unique_id-Suffix | EN-Name | Ebene |
 |---|---|---|---|---|
@@ -446,10 +478,12 @@ gehört der Konto-Entry), der Konto-Button **keinen** Usage-Zyklus. Die
 Trennung ist device-scoped: gleicher Anzeigename, unterschiedliche
 `unique_id` (`{entry_id}_refresh` vs. `account_refresh`).
 
-Der dritte Button ist **kein** Refresh: `reset_burn_lookbacks`
-(`translation_key` `reset_burn_lookbacks`, Suffix `burn_lookback_reset`,
-`entity_category: diagnostic`) setzt ausschließlich die drei Burn-Lookbacks
-zurück — vollständige Semantik in §8.4.
+Die beiden Refresh-Buttons bleiben **`entity_category: null`**: ein manueller
+Refresh ist eine Alltagsaktion, keine Diagnose (§8.0). Der dritte Button ist
+**kein** Refresh: `reset_burn_lookbacks` (`translation_key`
+`reset_burn_lookbacks`, Suffix `burn_lookback_reset`, **`entity_category:
+diagnostic`**) setzt ausschließlich die drei Burn-Lookbacks zurück —
+vollständige Semantik in §8.4.
 
 ### 8.4 Burn Lookback (verbindlich seit Canon 1.7.0)
 
