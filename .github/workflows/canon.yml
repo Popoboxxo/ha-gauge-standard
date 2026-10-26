@@ -10,11 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
-        repository: Popoboxxo/ha-go-gauge
-        directory: ha-go-gauge
+        with:
+          repository: Popoboxxo/ha-go-gauge
+          path: ha-go-gauge
       - uses: actions/checkout@v4
-        repository: Popoboxxo/ha-command-gauge
-        directory: ha-command-gauge
+        with:
+          repository: Popoboxxo/ha-command-gauge
+          path: ha-command-gauge
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
