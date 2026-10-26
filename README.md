@@ -146,5 +146,13 @@ Registriert bleiben nur **API-blockierte** Abweichungen (Pricing-Katalog-Sensore
 Attribute), die **synthetische** month-Ableitung (CG-M1) und **domain-begründete**
 Number-Ranges.
 
+**Geplant (Kanon 1.7.0):** Der Kanon **1.7.0** überführt die
+Burn-Lookback-Keys (`burn_lookback_5h`, `burn_lookback_week`,
+`burn_lookback_month`, `reset_burn_lookbacks`) aus `domain_extensions` in die
+`entities`-Liste (`canon/entities.md` §8.4) und macht das **echte
+Kalendermonat** aus `resetsAt` verbindlich (§2); go_gauge **2.1.0**
+implementiert diese Entities bereits, in Kanon 1.6.0 sind sie nur
+`phase: "reserved"` (`planned_canon_version: "1.7.0"`).
+
 Checker-Ergebnis: `check_canon.py` → go_gauge **0/0** (Referenz grün),
 command_gauge **0 Fehler / 8 registrierte Warnungen**.
