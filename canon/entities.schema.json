@@ -1,10 +1,10 @@
 {
   "canon_version": "1.7.0",
-  "stand": "2026-10-25",
+  "stand": "2026-10-26",
   "master": {
     "repo": "Popoboxxo/ha-go-gauge",
     "domain": "go_gauge",
-    "version": "2.0.0"
+    "version": "2.1.0"
   },
   "convergence_target": {
     "repo": "Popoboxxo/ha-command-gauge",
@@ -92,7 +92,7 @@
       "state_class": "MEASUREMENT",
       "icons": ["mdi:trending-up"],
       "unique_id_suffix": "forecast",
-      "attributes": [],
+      "attributes": ["forecast_recent", "forecast_method", "elapsed_fraction", "window_seconds"],
       "behavior": "linear projection percent/elapsed_fraction; may exceed 100; None right after reset"
     },
     {
@@ -106,7 +106,7 @@
       "state_class": null,
       "icons": ["mdi:check-circle-outline", "mdi:alert-circle-outline", "mdi:close-circle-outline", "mdi:speedometer-medium"],
       "unique_id_suffix": "pace",
-      "attributes": ["forecast_percent", "green_below", "red_above"],
+      "attributes": ["forecast_percent", "green_below", "red_above", "forecast_recent", "forecast_method", "elapsed_fraction", "window_seconds"],
       "behavior": "green/yellow/red via warning_threshold + pace_red_limit"
     },
     {
@@ -147,7 +147,7 @@
       "state_class": "MEASUREMENT",
       "icons": ["mdi:fire"],
       "unique_id_suffix": "burn_rate",
-      "attributes": []
+      "attributes": ["lookback_minutes", "samples", "lookback_too_short"]
     },
     {
       "id": "rate_limited",
@@ -263,6 +263,12 @@
       "icons": ["mdi:alert-octagon-outline"],
       "unique_id_suffix": "warn_percent",
       "attributes": [],
+      "min": 1,
+      "max": 100,
+      "default": 80,
+      "step": 1,
+      "mode": "box",
+      "entity_category": null,
       "behavior": "NumberMode.BOX, step 1, persistent via persist_options"
     },
     {
@@ -274,7 +280,13 @@
       "unit": "%",
       "icons": ["mdi:alert-decagram-outline"],
       "unique_id_suffix": "pace_red_percent",
-      "attributes": []
+      "attributes": [],
+      "min": 1,
+      "max": 300,
+      "default": 100,
+      "step": 1,
+      "mode": "box",
+      "entity_category": null
     },
     {
       "id": "usage_refresh_min",
@@ -286,6 +298,12 @@
       "icons": ["mdi:timer-outline"],
       "unique_id_suffix": "usage_refresh_minutes",
       "attributes": [],
+      "min": 1,
+      "max": 1440,
+      "default": 10,
+      "step": 1,
+      "mode": "box",
+      "entity_category": null,
       "behavior": "changing value triggers recalculate_interval()"
     },
     {
@@ -298,7 +316,70 @@
       "icons": ["mdi:timer-outline"],
       "unique_id_suffix": "models_refresh_minutes",
       "attributes": [],
+      "min": 1,
+      "max": 1440,
+      "default": 60,
+      "step": 1,
+      "mode": "box",
+      "entity_category": null,
       "behavior": "GLOBAL on the go_gauge account ConfigEntry (not per workspace): NumberMode.BOX, step 1, range 1-1440, default 60; live effect via AccountCoordinator.set_fetch_interval + persist_account_options, no entry reload"
+    },
+    {
+      "id": "burn_lookback_5h",
+      "platform": "number",
+      "scope": "entry",
+      "translation_key": "burn_lookback_5h",
+      "name_en": "5h Burn Lookback",
+      "unit": "min",
+      "icons": ["mdi:history"],
+      "unique_id_suffix": "burn_lookback_5h_minutes",
+      "attributes": [],
+      "min": 15,
+      "max": 300,
+      "default": 120,
+      "step": 5,
+      "mode": "slider",
+      "entity_category": "config",
+      "default_required": true,
+      "behavior": "Burn-rate OLS lookback in minutes for the 5h window; live effect + persist_options; no sample-history reset"
+    },
+    {
+      "id": "burn_lookback_week",
+      "platform": "number",
+      "scope": "entry",
+      "translation_key": "burn_lookback_week",
+      "name_en": "Weekly Burn Lookback",
+      "unit": "min",
+      "icons": ["mdi:history"],
+      "unique_id_suffix": "burn_lookback_week_minutes",
+      "attributes": [],
+      "min": 60,
+      "max": 10080,
+      "default": 720,
+      "step": 60,
+      "mode": "slider",
+      "entity_category": "config",
+      "default_required": true,
+      "behavior": "Burn-rate OLS lookback in minutes for the weekly window; live effect + persist_options; no sample-history reset"
+    },
+    {
+      "id": "burn_lookback_month",
+      "platform": "number",
+      "scope": "entry",
+      "translation_key": "burn_lookback_month",
+      "name_en": "Monthly Burn Lookback",
+      "unit": "min",
+      "icons": ["mdi:history"],
+      "unique_id_suffix": "burn_lookback_month_minutes",
+      "attributes": [],
+      "min": 60,
+      "max": 10080,
+      "default": 2880,
+      "step": 60,
+      "mode": "slider",
+      "entity_category": "config",
+      "default_required": true,
+      "behavior": "Burn-rate OLS lookback in minutes for the monthly window; live effect + persist_options; no sample-history reset"
     },
     {
       "id": "auto_update_usage",
@@ -334,6 +415,18 @@
       "behavior": "workspace device-scoped: forces the usage cycle ONLY (never a catalog fetch, which belongs to the account entry)"
     },
     {
+      "id": "reset_burn_lookbacks",
+      "platform": "button",
+      "scope": "entry",
+      "translation_key": "reset_burn_lookbacks",
+      "name_en": "Reset Burn Lookbacks",
+      "icons": ["mdi:restore"],
+      "unique_id_suffix": "burn_lookback_reset",
+      "attributes": [],
+      "entity_category": "diagnostic",
+      "behavior": "Resets ONLY the three burn lookbacks to their defaults (no sample history, no thresholds, no refresh interval)"
+    },
+    {
       "id": "account_refresh",
       "platform": "button",
       "scope": "account",
@@ -359,10 +452,13 @@
     ]
   },
   "settings_ranges": {
-    "warning_threshold": {"unit": "%", "min": 1, "max": 100, "default": 80, "number": "warning_threshold"},
-    "pace_red_limit": {"unit": "%", "min": 1, "max": 300, "default": 100, "number": "pace_red_limit"},
-    "usage_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 10, "number": "usage_refresh_min"},
-    "models_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 60, "number": "models_refresh_min"}
+    "warning_threshold": {"unit": "%", "min": 1, "max": 100, "default": 80, "step": 1, "mode": "box", "entity_category": null, "number": "warning_threshold"},
+    "pace_red_limit": {"unit": "%", "min": 1, "max": 300, "default": 100, "step": 1, "mode": "box", "entity_category": null, "number": "pace_red_limit"},
+    "usage_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 10, "step": 1, "mode": "box", "entity_category": null, "number": "usage_refresh_min"},
+    "models_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 60, "step": 1, "mode": "box", "entity_category": null, "number": "models_refresh_min"},
+    "burn_lookback_5h": {"unit": "min", "min": 15, "max": 300, "default": 120, "step": 5, "mode": "slider", "entity_category": "config", "default_required": true, "number": "burn_lookback_5h"},
+    "burn_lookback_week": {"unit": "min", "min": 60, "max": 10080, "default": 720, "step": 60, "mode": "slider", "entity_category": "config", "default_required": true, "number": "burn_lookback_week"},
+    "burn_lookback_month": {"unit": "min", "min": 60, "max": 10080, "default": 2880, "step": 60, "mode": "slider", "entity_category": "config", "default_required": true, "number": "burn_lookback_month"}
   },
   "known_deviations": {
     "command_gauge": [
@@ -375,7 +471,14 @@
       {"id": "usage_refresh_min", "aspect": "settings_range", "cg_id": "CG-N3", "severity": "warning", "actual": {"min": 5, "max": 1440}, "reason": "Domain-begruendet (CommandCode-API-Fair-Use)", "closing": "entfaellt (domain-begruendete Abweichung)"},
       {"id": "models_refresh_min", "aspect": "settings_range", "cg_id": "CG-N4", "severity": "warning", "actual": {"min": 60, "max": 1440}, "reason": "Domain-begruendet (CommandCode-API-Fair-Use)", "closing": "entfaellt (domain-begruendete Abweichung)"},
       {"id": "account_device", "aspect": "account_device", "cg_id": "CG-D1", "doc_only": true, "severity": "info", "actual": null, "reason": "go_gauge owns the account Device through its own account ConfigEntry (unique_id go_gauge_account, entry_kind 'account'); workspace entries no longer hold catalog entities - there is no 'catalog owner' first-instance rule anymore. command_gauge: each Config-Entry is its own account, no duplicate problem", "closing": "entfaellt (kein Duplikat-Problem)"},
-      {"id": "credits_below_threshold", "aspect": "domain_extension", "cg_id": "CG-B4", "doc_only": true, "severity": "info", "actual": "present", "reason": "domain-erlaubt Extension (command_gauge only)", "closing": "entfaellt (domain-erlaubt)"}
+      {"id": "credits_below_threshold", "aspect": "domain_extension", "cg_id": "CG-B4", "doc_only": true, "severity": "info", "actual": "present", "reason": "domain-erlaubt Extension (command_gauge only)", "closing": "entfaellt (domain-erlaubt)"},
+      {"id": "burn_lookback_5h", "aspect": "presence", "cg_id": "CG-N5", "severity": "warning", "actual": null, "reason": "command_gauge 2.x hat noch keine Burn-Lookback-Slider (Burn-Rate-Lookback dort hart verdrahtet)", "closing": "entfaellt, sobald command_gauge die drei Burn-Lookback-Number-Entities liefert"},
+      {"id": "burn_lookback_week", "aspect": "presence", "cg_id": "CG-N5", "severity": "warning", "actual": null, "reason": "command_gauge 2.x hat noch keine Burn-Lookback-Slider (Burn-Rate-Lookback dort hart verdrahtet)", "closing": "entfaellt, sobald command_gauge die drei Burn-Lookback-Number-Entities liefert"},
+      {"id": "burn_lookback_month", "aspect": "presence", "cg_id": "CG-N5", "severity": "warning", "actual": null, "reason": "command_gauge 2.x hat noch keine Burn-Lookback-Slider (Burn-Rate-Lookback dort hart verdrahtet)", "closing": "entfaellt, sobald command_gauge die drei Burn-Lookback-Number-Entities liefert"},
+      {"id": "reset_burn_lookbacks", "aspect": "presence", "cg_id": "CG-B6", "severity": "warning", "actual": null, "reason": "command_gauge hat keinen Reset-Button fuer Burn-Lookbacks", "closing": "entfaellt, sobald command_gauge den Reset-Button liefert"},
+      {"id": "forecast", "aspect": "attributes", "cg_id": "CG-C3", "severity": "warning", "actual": ["attributes_missing: forecast_recent, forecast_method, elapsed_fraction, window_seconds"], "reason": "command_gauge 2.0.0 projiziert den Forecast noch ohne Methoden-/Fensterattribute (Burn-Lookback dort hart verdrahtet)", "closing": "entfaellt, sobald command_gauge die Attribute forecast_recent/forecast_method/elapsed_fraction/window_seconds am Forecast liefert"},
+      {"id": "pace", "aspect": "attributes", "cg_id": "CG-C3", "severity": "warning", "actual": ["attributes_missing: forecast_recent, forecast_method, elapsed_fraction, window_seconds"], "reason": "command_gauge 2.0.0 fuehrt die Methoden-/Fensterattribute noch nicht an der Pace-Ampel", "closing": "entfaellt, sobald command_gauge die Attribute an der Pace-Entitaet liefert"},
+      {"id": "burn_rate", "aspect": "attributes", "cg_id": "CG-C3", "severity": "warning", "actual": ["attributes_missing: lookback_minutes, samples, lookback_too_short"], "reason": "command_gauge 2.0.0 hat keinen konfigurierbaren Burn-Lookback", "closing": "entfaellt, sobald command_gauge die Burn-Lookback-Attribute liefert"}
     ]
   }
 }

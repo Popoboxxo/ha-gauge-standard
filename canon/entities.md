@@ -1,19 +1,37 @@
 # Gauge Entity Canon v1.7.0
 
 Verbindliche Spezifikation des Entity-Modells aller Gauge-Integrationen
-(`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 2.0.0**.
+(`go_gauge`, `command_gauge`). Master/Stil-Referenz: **ha-go-gauge 2.1.0**.
 Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 (→ Abschnitt „Ausnahmeregelung").
 
-> **Neu in Kanon v1.7.0 (2026-10-25):** Der Kanon wird um einen **getrennten,
-> verbindlichen Repository-Hygiene-/Dokumentations-Contract** ergänzt
-> (`canon/repository.md` + `canon/repository.schema.json`, geprüft von
+> **Neu in Kanon v1.7.0 (2026-10-26):** Aktivierung der in 1.6.0 nur
+> reservierten Burn-Lookback-Settings. Anlass: go_gauge **2.1.0** implementiert
+> die drei **Burn-Lookback-Number-Entities**
+> (`burn_lookback_5h` / `burn_lookback_week` / `burn_lookback_month`, Slider,
+> `entity_category: config`) und den **Reset-Button** `reset_burn_lookbacks`
+> (`entity_category: diagnostic`) bereits; mit 1.7.0 wandern sie aus
+> `domain_extensions` in die verbindliche `entities`-Liste (§8.4). Gleichzeitig
+> verbindlich: die **Burn-Rate** ist eine **OLS-Steigung** über die Samples im
+> Lookback-Fenster (§3), die **Diagnose-Attribute** von `burn_rate` (D22) und
+> `forecast`/`pace` sind kanonisch (D22), und das `month`-Fenster nutzt den
+> **echten Kalendermonat** aus `resetsAt` statt der pauschalen 30-Tage-Näherung
+> (§2). `command_gauge` zieht per Paar-Change nach — bis dahin registriert:
+> **⚠️ CG-N5** (drei Burn-Lookback-Numbers fehlen), **⚠️ CG-B6**
+> (Reset-Button fehlt) und **⚠️ CG-C3** (die D22-Attribute an `forecast`,
+> `pace` und `burn_rate` fehlen, command_gauge 2.0.0). Der **Checker** prüft
+> zusätzlich `mode`, `step`, `default` (inkl. `default_required`) und
+> `entity_category` statisch (D16).
+>
+> **Zusätzlich in Kanon v1.7.0 (2026-10-26):** Der Kanon wird um einen
+> **getrennten, verbindlichen Repository-Hygiene-/Dokumentations-Contract**
+> ergänzt (`canon/repository.md` + `canon/repository.schema.json`, geprüft von
 > `scripts/check_repo_hygiene.py`). Er regelt ausschließlich die
 > Repository-Oberfläche (README-Paar EN/DE, My-Link, Screenshot, `hacs.json`/
 > `manifest.json`/Brand-Asset, Tag↔Manifest-Sync, Community-Dateien, CI-Gates,
-> Releases). **Der Entity-Inhalt dieses Dokuments bleibt unverändert**
-> (Master `go_gauge` 2.0.0, `master.version` 2.0.0; go_gauge 2.0.2 ist rein
-> Doku/Metadaten). `command_gauge` ist im Hygiene-Contract **⚠️ offen**
+> Releases). **Der Entity-Inhalt dieses Dokuments bleibt durch den
+> Hygiene-Contract unverändert** (Master `go_gauge` 2.1.0; go_gauge 2.0.2 ist
+> die Hygiene-Referenz). `command_gauge` ist im Hygiene-Contract **⚠️ offen**
 > (Transition) — **kein Entity-Bruch und kein neuer CG-Eintrag**.
 
 > **Neu in Kanon v1.6.0 (2026-10-25):** Der Kanon hebt den Konto-Vertrag auf eine
@@ -101,11 +119,20 @@ Maschinenlesbare Version: `canon/entities.schema.json`
 |---|---|---|
 | `5h` | `5h rolling` | 18 000 s |
 | `week` | `Weekly` | 604 800 s |
-| `month` | `Monthly` | 2 592 000 s (30-Tage-Näherung) ⚠️ CG-M1 (synthetisch) |
+| `month` | `Monthly` | 2 592 000 s nominaler Fallback — go_gauge: **echter Kalendermonat** aus `resetsAt` (seit 1.7.0); command_gauge: 30-Tage-Näherung, synthetisch ⚠️ CG-M1 |
 
 Fenster-Labels werden als `{window}`-Placeholder in `translation_placeholders`
 gesetzt; die Fenster-Entities werden dynamisch aus der Fenster-Liste erzeugt
 (deshalb skaliert der 7er-Satz automatisch auf neue Fenster).
+
+**Kalendermonat (go_gauge, verbindlich seit Kanon 1.7.0):** Das `month`-Fenster
+von go_gauge nutzt den **echten Kalendermonat**, abgeleitet aus `resetsAt`
+(Periodenende minus ein Kalendermonat, Tag geklemmt via `monthrange`; damit
+28/29/30/31 Tage je nach Monat statt pauschal 30).
+`WINDOW_SECONDS["month"]` (2 592 000 s) bleibt danach **nur** noch ein nominaler
+Fallback — maßgeblich ist die aus `resetsAt` berechnete Fensterlänge (sie geht
+als `window_seconds` in die Forecast-/Pace-Attribute ein, §3).
+command_gauge ist nicht betroffen (dort bleibt `month` synthetisch, ⚠️ CG-M1).
 
 ⚠️ **CG-M1 (command_gauge, synthetisch):** Die CommandCode-API hat **kein**
 rollierendes Monatsfenster — `windowLimits` liefert nur `fiveHour`/`weekly`;
@@ -155,12 +182,28 @@ Workspace-unabhängige Konto-Entities folgen dagegen dem Präfix-Schema
 - **Forecast:** lineare Projektion `percent / elapsed_fraction`, darf > 100 %
   zeigen; `None` direkt nach Reset (keine Fake-Zahl).
 - **Pace:** State `green`/`yellow`/`red` nach Forecast vs. zwei Number-Grenzen;
-  Attribute: `forecast_percent`, `green_below`, `red_above`.
+  Attribute: `forecast_percent`, `green_below`, `red_above`, dazu die
+  Diagnose-Attribute des Forecasts (`forecast_recent`, `forecast_method`,
+  `elapsed_fraction`, `window_seconds`).
 - **Remaining:** `100 − genutzt %`; `None` (nie 100) bei fehlendem Abo/Fehler.
-- **Time to Reset:** Sekunden/3600 als `h`; **Burn Rate:** Steigung der letzten
-  2 h in `%/h`.
+- **Time to Reset:** Sekunden/3600 als `h`.
+- **Burn Rate:** **OLS-Steigung** (lineare Regression) über die Samples im
+  Lookback-Fenster des jeweiligen Fensters, in `%/h` (seit 1.7.0; davor
+  Steigung der letzten 2 h). Lookback-Defaults und Grenzen stehen in §8.4.
 - **Attribute Usage:** `workspace_key`, `window`, `status`, `note`,
   `resets_at_iso`.
+
+**Diagnose-Attribute (D22, verbindlich seit Kanon 1.7.0):** Drei der sieben
+Sensoren tragen zusätzliche Attribute:
+
+| Entity | Zusätzliche Attribute | Bedeutung |
+|---|---|---|
+| `burn_rate` | `lookback_minutes`, `samples`, `lookback_too_short` | tatsächlich genutztes Lookback je Fenster, Anzahl der Regressions-Samples, Flag „zu wenige Samples im Lookback-Fenster" (dann bleibt die Rate `None`, nie eine Fake-Zahl) |
+| `forecast` | `forecast_recent`, `forecast_method`, `elapsed_fraction`, `window_seconds` | Forecast über das jüngste Teilfenster, Methode (OLS), verstrichener Fensteranteil, Fensterlänge in Sekunden (bei `month` die echte Kalendermonat-Länge, §2) |
+| `pace` | `forecast_recent`, `forecast_method`, `elapsed_fraction`, `window_seconds` | dieselben Diagnose-Attribute, gespiegelt vom Forecast |
+
+Der Checker erzwingt diese Listen (`extra_state_attributes`); command_gauge
+liefert sie noch nicht (offener Paar-Change, vgl. ⚠️ CG-C3 / CG-N5 / CG-B6).
 
 ✅ **CG-W2/CG-W3 (command_gauge, geschlossen in 1.0.0):** Keys sind kanonisch
 (`usage`, `reset`, `forecast`, `pace`, `remaining`, `time_to_reset`,
@@ -330,8 +373,10 @@ nachgebildet).
 
 ### 8.1 Numbers (4) — Wertebereiche sind Kanon (go_gauge-Werte)
 
-Alle: `NumberMode.BOX`, `native_step = 1`, Unit wie angegeben, sofort
-wirksam + persistent via `persist_options` (ohne Entry-Reload).
+Alle: `NumberMode.BOX`, `native_step = 1`, `entity_category` **nicht gesetzt**
+(`null`), Unit wie angegeben, sofort wirksam + persistent via `persist_options`
+(ohne Entry-Reload). `mode`/`step`/`entity_category` sind seit Kanon 1.7.0
+maschinell geprüft (D16).
 
 | # | translation_key | Unit | Min | Max | Default | Icon | unique_id-Suffix | EN-Name | Ebene |
 |---|---|---|---|---|---|---|---|---|---|
@@ -385,9 +430,9 @@ Schalters entfällt; ihre Alt-Entities werden entfernt (§13).
 `auto_update_models` (Icons identisch, unique_id-Suffix kanonisch) — dort
 weiterhin beide auf der jeweiligen Entry, ohne Konto-Split.
 
-### 8.3 Buttons (2, geteilter `translation_key`)
+### 8.3 Buttons (3 — davon 2 Refresh mit geteiltem `translation_key`)
 
-Beide Buttons heißen kanonisch `Refresh` — derselbe `translation_key`
+Beide **Refresh**-Buttons heißen kanonisch `Refresh` — derselbe `translation_key`
 (`refresh`), getrennt durch **Device** und `unique_id`-Präfix. Ein Klick löst
 jeweils **nur** seinen eigenen Zyklus aus:
 
@@ -401,6 +446,58 @@ gehört der Konto-Entry), der Konto-Button **keinen** Usage-Zyklus. Die
 Trennung ist device-scoped: gleicher Anzeigename, unterschiedliche
 `unique_id` (`{entry_id}_refresh` vs. `account_refresh`).
 
+Der dritte Button ist **kein** Refresh: `reset_burn_lookbacks`
+(`translation_key` `reset_burn_lookbacks`, Suffix `burn_lookback_reset`,
+`entity_category: diagnostic`) setzt ausschließlich die drei Burn-Lookbacks
+zurück — vollständige Semantik in §8.4.
+
+### 8.4 Burn Lookback (verbindlich seit Canon 1.7.0)
+
+Die drei Numbers steuern je Fenster, wie weit die Burn-Rate zurückblickt
+(Default bewusst fensterabhängig: 2 h / 12 h / 48 h). Alle drei:
+`NumberMode.SLIDER`, `entity_category: config`, `unit: min`, `native_step` wie
+in der Tabelle, sofort wirksam + persistent via `persist_options` (ohne
+Entry-Reload). Zusammen mit dem Reset-Button sind sie seit Kanon **1.7.0**
+**Core-Entities** (`entities`-Liste, nicht mehr `domain_extensions`) und damit
+prüfpflichtig; der Checker validiert zusätzlich `mode`, `step`, `default`
+(`default_required`) und `entity_category` (D16).
+
+| # | translation_key | Plattform | Unit | Min | Max | Default | Step | Mode | entity_category | unique_id-Suffix | EN-Name |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | `burn_lookback_5h` | number | `min` | **15** | **300** | 120 | 5 | slider | config | `burn_lookback_5h_minutes` | `5h Burn Lookback` |
+| 2 | `burn_lookback_week` | number | `min` | **60** | **10080** | 720 | 60 | slider | config | `burn_lookback_week_minutes` | `Weekly Burn Lookback` |
+| 3 | `burn_lookback_month` | number | `min` | **60** | **10080** | 2880 | 60 | slider | config | `burn_lookback_month_minutes` | `Monthly Burn Lookback` |
+| 4 | `reset_burn_lookbacks` | button | — | — | — | — | — | — | diagnostic | `burn_lookback_reset` | `Reset Burn Lookbacks` |
+
+Icon für alle vier: Nummern `mdi:history`, Button `mdi:restore`. Alle vier sind
+**workspace-lokal** (`scope: entry`, Device des jeweiligen Workspaces) — es gibt
+keine Konto-Variante.
+
+**Semantik:**
+
+- **Reset-Button (`reset_burn_lookbacks`):** setzt **ausschließlich** die drei
+  Burn-Lookback-Werte auf ihre Defaults zurück — **keine** Sample-History,
+  **keine** Schwellen (`warning_threshold`, `pace_red_limit`), **keine**
+  Refresh-Intervalle. Ebene: Workspace-Entry (`scope: entry`).
+- **Sample-Retention:** Pro Fenster werden Samples bis zur **maximalen
+  Slider-Länge** aufbewahrt (Cap **10 080 Samples** pro Fenster = Maximalwert
+  in Minuten). Ein späteres Hochziehen des Sliders findet damit vorhandene
+  Samples wieder; ein Auffüllen über den Cap hinaus findet nicht statt.
+- **Burn-Rate:** **OLS-Steigung** (lineare Regression) über die Samples im
+  Lookback-Fenster, in `%/h` (§3).
+- **`lookback_too_short`:** Attribut auf `burn_rate`; `true`, wenn im
+  Lookback-Fenster zu wenige Samples für eine belastbare Regression liegen
+  (dann bleibt die Rate `None`, nie eine Fake-Zahl).
+- **Fensterlänge je Fenster:** `burn_lookback_X` gilt **nur** für sein eigenes
+  Fenster (`5h`, `week`, `month`); es gibt keine fensterübergreifende
+  Einstellung.
+
+**command_gauge (Paar-Change ausstehend):** Die drei Numbers fehlen (⚠️
+**CG-N5**), der Reset-Button fehlt (⚠️ **CG-B6**), die Burn-Lookback-Attribute
+am `burn_rate` fehlen (⚠️ **CG-C3**) — der Burn-Rate-Lookback ist dort hart
+verdrahtet. *Schließung:* entfällt, sobald command_gauge die drei
+Number-Entities bzw. den Reset-Button liefert.
+
 ## 9. Namensschema / Wortstellung
 
 - **Kanon-Wortstellung (go_gauge-Stil):** Fenster-Placeholder **vorn**:
@@ -413,6 +510,13 @@ Trennung ist device-scoped: gleicher Anzeigename, unterschiedliche
   offener Punkt OP-1).
 - `Burn-Rate` wird im EN-Master als `Burn-Rate` (Binnenmajuskel-Wort)
   geschrieben — Kanon gegenüber `Burn rate`.
+- **Settings-Namen** ohne `{window}`-Placeholder (die Fensterbindung steckt im
+  `translation_key`): `Warning Threshold`, `Pace Red Limit`,
+  `Usage Refresh (min)`, `Models Refresh (min)` und seit Kanon 1.7.0
+  `5h Burn Lookback`, `Weekly Burn Lookback`, `Monthly Burn Lookback`,
+  `Reset Burn Lookbacks` (§8.4). `unique_id`-Suffixe der drei Slider:
+  `burn_lookback_{5h,week,month}_minutes`; der Reset-Button nutzt
+  `burn_lookback_reset`.
 - Kein hartcodiertes `_attr_name`/`name`-Literal; Anzeigename ausschließlich
   über `_attr_translation_key` (eiserne Regel).
 
