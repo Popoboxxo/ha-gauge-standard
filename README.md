@@ -23,13 +23,22 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 
 ```
 canon/
-  entities.md          # verbindlicher Kanon v1.7.0 (menschenlesbar, Deutsch)
-  entities.schema.json # maschinenlesbare Version (prüfbar)
+  entities.md            # Entity-Kanon v1.7.0 (menschenlesbar, Deutsch)
+  entities.schema.json   # maschinenlesbare Entity-Version (prüfbar)
+  repository.md          # Repository-Hygiene-/Doku-Contract v1.7.0 (Deutsch)
+  repository.schema.json # maschinenlesbare Beschreibung des Hygiene-Contracts
 scripts/
-  check_canon.py       # Prüft eine Integration gegen entities.schema.json
+  check_canon.py         # Prüft eine Integration gegen entities.schema.json
+  check_repo_hygiene.py  # ausführbarer Regelsatz des Hygiene-Contracts
 matrix/
-  parity.md            # Feature-Matrix / Pflegedatei (Kanon-Zustand)
+  parity.md              # Feature-Matrix / Pflegedatei (Kanon-Zustand)
 ```
+
+Der Entity-Kanon (`canon/entities.md`) und der Repository-Hygiene-Contract
+(`canon/repository.md`) sind **zwei getrennte, sich ergänzende Verträge**:
+Ersterer regelt Entities/Übersetzungen, letzterer die Repository-Oberfläche
+(README-Paar, My-Link, Metadaten, Community-Dateien, CI, Releases). Eine
+Hygiene-Änderung berührt **keine** Entity und keine `unique_id`.
 
 ## Nutzung der Consumer-Repos
 
@@ -49,6 +58,48 @@ matrix/
 
 - **Exit-Codes:** `0` = OK, `1` = Fehler. Warnungen (⚠️) für im Kanon
   registrierte Abweichungen lassen den Lauf grün.
+
+## Repository-Hygiene prüfen
+
+`scripts/check_repo_hygiene.py` prüft die Repository-Oberfläche gegen
+`canon/repository.md` + `canon/repository.schema.json` (nur Dateien, HA-frei,
+Python-Standardbibliothek). Rollenverteilung: `canon/repository.schema.json`
+**beschreibt** den Contract maschinenlesbar, der Checker ist der
+**ausführbare Regelsatz** und damit die maßgebliche Instanz. Nicht jeder
+Schema-Schlüssel wird 1:1 vom Code konsumiert (GitHub-Einstellungen wie
+Description/Topics lassen sich aus einem Checkout nicht prüfen); weicht beides
+voneinander ab, gilt der Checker.
+
+```bash
+# Referenz: muss grün sein (Exit 0, keine Findings)
+python3 scripts/check_repo_hygiene.py /pfad/zu/ha-go-gauge
+
+# Konvergenz-Ziel: alle Lücken als WARNING, Exit 0
+python3 scripts/check_repo_hygiene.py /pfad/zu/ha-command-gauge --warn-only
+```
+
+- **Exit-Codes:** `0` = keine Fehler, `1` = mindestens ein Fehler **oder**
+  unlesbarer/fehlender Repo-Pfad (letzteres bleibt auch mit `--warn-only`
+  ein Fehler).
+- **`--warn-only`** stuft jedes Finding zu einer Warnung herab und lässt den
+  Lauf mit `0` enden — so bleiben Konvergenz-Ziele CI-grün, während die Lücken
+  sichtbar bleiben.
+- **`--schema PATH`** erzwingt eine abweichende Schema-Datei.
+- Der Tag↔`manifest.version`-Abgleich ist best-effort: fehlt in einer flachen
+  CI-Kopie die Tag-Info, meldet der Checker
+  „Tag-Info nicht verfügbar — Tag↔Manifest nicht prüfbar“ als WARNING und
+  **nie** als Fehler.
+
+## Distribution: Custom Repository vs. Katalog
+
+Der **Katalog-/Store-Eintrag ist optional**. Der **Custom-Repository-Weg über
+den My-Link** (`hacs_repository`) ist ausdrücklich unterstützt und bleibt der
+primäre Distributionspfad; der Hygiene-Contract gilt für beide Wege identisch.
+`command_gauge` steht noch am Anfang der Transition (⚠️ offen: README-Paar,
+`render_readme` in `hacs.json`, Community-Dateien); Schließungsbedingung:
+„Hygiene-Contract umgesetzt (README EN/DE, Templates, Community-Dateien,
+Checker grün)“. Das ist **keine Entity-Abweichung** und braucht keinen
+CG-Eintrag.
 
 ## Git-Hooks (pre-commit)
 
@@ -107,6 +158,19 @@ zusätzlich `mode`, `step`, `default` (inkl. `default_required`) und
 `entity_category` statisch (D16). command_gauge: ⚠️ **CG-N5** (drei
 Burn-Lookback-Numbers), ⚠️ **CG-B6** (Reset-Button) und ⚠️ **CG-C3** (die
 D22-Attribute) registriert — der Paar-Change steht dort noch aus.
+
+Zusätzlich führt Kanon v1.7.0 den verbindlichen **Repository-Hygiene-/
+Dokumentations-Contract** ein (`canon/repository.md`, maschinenlesbar
+`canon/repository.schema.json`, Checker `scripts/check_repo_hygiene.py`). Er
+regelt ausschließlich die Repository-Oberfläche: README-Paar EN/DE mit
+identischem Language Switcher, My-Link, Screenshot, `hacs.json`/`manifest.json`/
+Brand-Asset, Tag↔Manifest-Sync, Community-Dateien, CI-Gates und Releases. Der
+**Entity-Inhalt bleibt durch den Hygiene-Contract unverändert**; go_gauge
+**2.0.2** ist die Hygiene-Referenz (Checker 0 Fehler / 0 Warnungen).
+command_gauge ist **⚠️ offen** (Transition: README-Paar, `render_readme`,
+Community-Dateien) — Schließungsbedingung im Contract, **kein CG-Eintrag** und
+kein Entity-Bruch.
+
 Neu in v1.6.0:
 Der Kanon hebt den Konto-Vertrag auf eine **eigene Konto-ConfigEntry**
 (`canon/entities.md` §13). Anlass: Der bisherige Text beschrieb die

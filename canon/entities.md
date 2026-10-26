@@ -22,6 +22,17 @@ Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 > `pace` und `burn_rate` fehlen, command_gauge 2.0.0). Der **Checker** prüft
 > zusätzlich `mode`, `step`, `default` (inkl. `default_required`) und
 > `entity_category` statisch (D16).
+>
+> **Zusätzlich in Kanon v1.7.0 (2026-10-26):** Der Kanon wird um einen
+> **getrennten, verbindlichen Repository-Hygiene-/Dokumentations-Contract**
+> ergänzt (`canon/repository.md` + `canon/repository.schema.json`, geprüft von
+> `scripts/check_repo_hygiene.py`). Er regelt ausschließlich die
+> Repository-Oberfläche (README-Paar EN/DE, My-Link, Screenshot, `hacs.json`/
+> `manifest.json`/Brand-Asset, Tag↔Manifest-Sync, Community-Dateien, CI-Gates,
+> Releases). **Der Entity-Inhalt dieses Dokuments bleibt durch den
+> Hygiene-Contract unverändert** (Master `go_gauge` 2.1.0; go_gauge 2.0.2 ist
+> die Hygiene-Referenz). `command_gauge` ist im Hygiene-Contract **⚠️ offen**
+> (Transition) — **kein Entity-Bruch und kein neuer CG-Eintrag**.
 
 > **Neu in Kanon v1.6.0 (2026-10-25):** Der Kanon hebt den Konto-Vertrag auf eine
 > **eigene Konto-ConfigEntry** (go_gauge **2.0.0**). Anlass: Der bisherige Text
@@ -511,6 +522,28 @@ Number-Entities bzw. den Reset-Button liefert.
 
 ✅ **CG-NAME1 (geschlossen in 1.0.0):** command_gauge stellt das Fenster jetzt
 vorn (`{window} Usage`, `{window} Burn-Rate`, `{window} rate-limited`, …).
+
+### 9.1 Entity-IDs und Anzeigenamen (Abgrenzung)
+
+Der englische Namens-Contract aus §9 (Master-Sprache) gilt für kanonische
+Namen, Translation-Keys und `unique_id`s — **nicht** für die von Home
+Assistant erzeugte `entity_id`.
+
+- HA erzeugt die `entity_id` **einmalig** bei der Erst-Registrierung aus dem zu
+  diesem Zeitpunkt lokalisierten Anzeigenamen plus dem Gerätenamen. Danach
+  ändert HA sie nicht automatisch — weder bei einer Änderung des Anzeigenamens
+  noch bei einem Sprachwechsel.
+- Folge: `entity_id`s dürfen zwischen Installationen abweichen. Lokalisierte
+  oder historisch gewachsene IDs (z. B.
+  `binary_sensor.go_gauge_konto_api_erreichbar`) sind **kein** Verstoß.
+- Stabile Identität ist ausschließlich die `unique_id`. Ein manuelles Rename
+  der `entity_id` ist **breaking** (Automatisierungen, Dashboards, History)
+  und nicht Teil des Contracts.
+- Konto-/Workspace-Präfixe (Konto: `konto`, z. B. `go_gauge_konto`;
+  Workspace-Namen sind user-defined) sind zulässig und kein Verstoß.
+- README-Pflichtabschnitt: siehe `canon/repository.md` §3 — dort ist die
+  Entity-Namen-/Entity-ID-Policy als Dokumentationspflicht verankert; eine
+  Entity-Liste wird hier nicht dupliziert.
 
 ## 10. Ausnahmeregelung (⚠️-Regime)
 

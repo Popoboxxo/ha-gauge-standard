@@ -13,10 +13,14 @@ jobs:
         with:
           repository: Popoboxxo/ha-go-gauge
           path: ha-go-gauge
+          fetch-depth: 0
+          fetch-tags: true
       - uses: actions/checkout@v4
         with:
           repository: Popoboxxo/ha-command-gauge
           path: ha-command-gauge
+          fetch-depth: 0
+          fetch-tags: true
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -28,3 +32,7 @@ jobs:
         run: python3 scripts/check_canon.py ha-go-gauge
       - name: Checker command_gauge (registered deviations only)
         run: python3 scripts/check_canon.py ha-command-gauge
+      - name: Hygiene go_gauge (must be green)
+        run: python3 scripts/check_repo_hygiene.py ha-go-gauge
+      - name: Hygiene command_gauge (convergence target, warn-only)
+        run: python3 scripts/check_repo_hygiene.py ha-command-gauge --warn-only
