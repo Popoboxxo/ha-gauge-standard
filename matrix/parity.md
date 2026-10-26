@@ -1,6 +1,6 @@
 # Gauge Parity-Matrix (Pflegedatei)
 
-Stand: 2026-10-26 · Kanon **v1.7.0** (`canon/entities.md`, Master = go_gauge **2.1.0**,
+Stand: 2026-10-27 · Kanon **v1.8.0** (`canon/entities.md`, Master = go_gauge **2.1.0**,
 Konto-ConfigEntry + `account_`-Präfix, Burn-Lookback aktiviert; zusätzlich
 Repository-Hygiene `canon/repository.md` v1.7.0, Hygiene-Referenz go_gauge
 **2.0.2**) ·
@@ -148,6 +148,25 @@ D22-Attribute ebenfalls noch nicht (⚠️ CG-C3, offener Paar-Change).
 | EN-Master, Fenster-Placeholder **vorn** (`{window} Usage`) | ✅ | ✅ | ✅ |
 | `strings.json` + `translations/{en,de}.json` vollständig | ✅ | ✅ | ✅ |
 | `Burn-Rate`-Schreibweise EN | ✅ | ✅ | ✅ |
+
+## Entity-Kategorien (v1.8.0)
+
+Reine UI-/Registry-Metadaten; **keine** Änderung an `unique_id`, `entity_id`,
+State, Historie oder Automationen. Device-Topologie bleibt unverändert; keine
+Trennung nach Stunden/Woche/Monat über Kategorien (nur über Namen/Keys).
+
+| Entity-Gruppe | Kategorie | go_gauge | command_gauge | Status |
+|---|---|---|---|---|
+| Settings-Numbers (`warning_threshold`, `pace_red_limit`, `usage_refresh_min`, `models_refresh_min`) | `config` | ✅ ab 2.1.1 | ⚠️ Transition (Paar-Change) | — |
+| Burn-Lookback-Numbers (`burn_lookback_5h/week/month`) | `config` | ✅ | ⚠️ CG-N5 (Entities fehlen) | ⚠️ |
+| Auto-Update-Switches (`auto_update_usage`, `auto_update_models`) | `config` | ✅ ab 2.1.1 | ⚠️ Transition (Paar-Change) | — |
+| Reset-Button (`reset_burn_lookbacks`) | `diagnostic` | ✅ | ⚠️ CG-B6 (Button fehlt) | ⚠️ |
+| Primärdaten (Sensoren/Binary-Sensoren) | `null` | ✅ | ✅ | ✅ |
+| Refresh-Buttons (`refresh`, `account_refresh`) | `null` | ✅ | ✅ | ✅ |
+
+**Übergang:** Solange die Consumer noch `null` liefern, sind die neuen
+`config`-Werte im Schema nicht erzwungen (Phase A). Nach dem Paar-Change
+erzwingt Phase B die exakten Werte; es entstehen **keine neuen CG-IDs**.
 
 ## Repository-Hygiene (v1.7.0)
 

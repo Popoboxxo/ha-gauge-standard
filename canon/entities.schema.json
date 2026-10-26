@@ -1,6 +1,6 @@
 {
-  "canon_version": "1.7.0",
-  "stand": "2026-10-26",
+  "canon_version": "1.8.0",
+  "stand": "2026-10-27",
   "master": {
     "repo": "Popoboxxo/ha-go-gauge",
     "domain": "go_gauge",
@@ -268,7 +268,6 @@
       "default": 80,
       "step": 1,
       "mode": "box",
-      "entity_category": null,
       "behavior": "NumberMode.BOX, step 1, persistent via persist_options"
     },
     {
@@ -285,8 +284,7 @@
       "max": 300,
       "default": 100,
       "step": 1,
-      "mode": "box",
-      "entity_category": null
+      "mode": "box"
     },
     {
       "id": "usage_refresh_min",
@@ -303,7 +301,6 @@
       "default": 10,
       "step": 1,
       "mode": "box",
-      "entity_category": null,
       "behavior": "changing value triggers recalculate_interval()"
     },
     {
@@ -321,7 +318,6 @@
       "default": 60,
       "step": 1,
       "mode": "box",
-      "entity_category": null,
       "behavior": "GLOBAL on the go_gauge account ConfigEntry (not per workspace): NumberMode.BOX, step 1, range 1-1440, default 60; live effect via AccountCoordinator.set_fetch_interval + persist_account_options, no entry reload"
     },
     {
@@ -452,10 +448,10 @@
     ]
   },
   "settings_ranges": {
-    "warning_threshold": {"unit": "%", "min": 1, "max": 100, "default": 80, "step": 1, "mode": "box", "entity_category": null, "number": "warning_threshold"},
-    "pace_red_limit": {"unit": "%", "min": 1, "max": 300, "default": 100, "step": 1, "mode": "box", "entity_category": null, "number": "pace_red_limit"},
-    "usage_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 10, "step": 1, "mode": "box", "entity_category": null, "number": "usage_refresh_min"},
-    "models_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 60, "step": 1, "mode": "box", "entity_category": null, "number": "models_refresh_min"},
+    "warning_threshold": {"unit": "%", "min": 1, "max": 100, "default": 80, "step": 1, "mode": "box", "number": "warning_threshold"},
+    "pace_red_limit": {"unit": "%", "min": 1, "max": 300, "default": 100, "step": 1, "mode": "box", "number": "pace_red_limit"},
+    "usage_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 10, "step": 1, "mode": "box", "number": "usage_refresh_min"},
+    "models_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 60, "step": 1, "mode": "box", "number": "models_refresh_min"},
     "burn_lookback_5h": {"unit": "min", "min": 15, "max": 300, "default": 120, "step": 5, "mode": "slider", "entity_category": "config", "default_required": true, "number": "burn_lookback_5h"},
     "burn_lookback_week": {"unit": "min", "min": 60, "max": 10080, "default": 720, "step": 60, "mode": "slider", "entity_category": "config", "default_required": true, "number": "burn_lookback_week"},
     "burn_lookback_month": {"unit": "min", "min": 60, "max": 10080, "default": 2880, "step": 60, "mode": "slider", "entity_category": "config", "default_required": true, "number": "burn_lookback_month"}

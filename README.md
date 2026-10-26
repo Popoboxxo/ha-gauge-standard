@@ -23,7 +23,7 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 
 ```
 canon/
-  entities.md            # Entity-Kanon v1.7.0 (menschenlesbar, Deutsch)
+  entities.md            # Entity-Kanon v1.8.0 (menschenlesbar, Deutsch)
   entities.schema.json   # maschinenlesbare Entity-Version (prüfbar)
   repository.md          # Repository-Hygiene-/Doku-Contract v1.7.0 (Deutsch)
   repository.schema.json # maschinenlesbare Beschreibung des Hygiene-Contracts
@@ -139,6 +139,13 @@ CI (`canon.yml`) additionally runs the Checker against both Consumer-Repos.
 | Code & Commits (Conventional Commits) | Englisch |
 
 ## Status
+
+Kanon **v1.8.0** — neue verbindliche **Entity-Kategorie-Policy** (§8.0):
+Settings-Numbers und Auto-Update-Switches werden `entity_category: config`,
+der Reset-Button bleibt `diagnostic`, Primärdaten und Refresh-Aktionen bleiben
+`null`. Reine UI-/Registry-Metadaten: kein `unique_id`-, `entity_id`-, State-,
+Historien- oder Automationsbruch. Der Checker erzwingt die neuen Werte erst,
+nachdem beide Consumer nachgezogen sind (Schema-Phase B).
 
 Kanon **v1.7.0** — abgeleitet aus `go_gauge` **2.1.0** (Master). Neu in v1.7.0:
 Aktivierung der in 1.6.0 nur reservierten **Burn-Lookback-Settings**
