@@ -14,7 +14,7 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 | Aspekt | Festlegung |
 |---|---|
 | **Single Source of Truth** | `canon/entities.md` (menschlich lesbar) + `canon/entities.schema.json` (maschinenlesbar) definieren verbindlich, wie Gauge-Entities heißen und aussehen. |
-| **Master/Stil-Referenz** | [`ha-go-gauge`](https://github.com/Popoboxxo/ha-go-gauge) — wo sich Integrationen unterscheiden, gilt `go_gauge` **2.0.0** als Kanon-Entscheidung, sofern unten nicht anders festgelegt. |
+| **Master/Stil-Referenz** | [`ha-go-gauge`](https://github.com/Popoboxxo/ha-go-gauge) — wo sich Integrationen unterscheiden, gilt `go_gauge` **2.1.0** als Kanon-Entscheidung, sofern unten nicht anders festgelegt. |
 | **Consumer** | [`ha-go-gauge`](https://github.com/Popoboxxo/ha-go-gauge) (`go_gauge`) und [`ha-command-gauge`](https://github.com/Popoboxxo/ha-command-gauge) (`command_gauge`). `command_gauge` ist das aktive **Konvergenz-Ziel**. |
 | **Paar-Change-Pflicht** | Jede Kanon-Änderung ist ein **Paar-Change**: sie wird in beiden Integrationen umgesetzt (soweit die jeweilige API hergibt) — nie nur in einem Repo. |
 | **Ausnahmen** | Domain-begründete Divergenz ist nur mit ⚠️-Eintrag im Kanon erlaubt, inkl. Begründung und **Schließungsbedingung** (*closing condition*). |
@@ -23,7 +23,7 @@ Einheiten/Device-Classes/Icons, gleiche Optionen.
 
 ```
 canon/
-  entities.md          # verbindlicher Kanon v1.6.0 (menschenlesbar, Deutsch)
+  entities.md          # verbindlicher Kanon v1.7.0 (menschenlesbar, Deutsch)
   entities.schema.json # maschinenlesbare Version (prüfbar)
 scripts/
   check_canon.py       # Prüft eine Integration gegen entities.schema.json
@@ -89,7 +89,25 @@ CI (`canon.yml`) additionally runs the Checker against both Consumer-Repos.
 
 ## Status
 
-Kanon **v1.6.0** — abgeleitet aus `go_gauge` **2.0.0** (Master). Neu in v1.6.0:
+Kanon **v1.7.0** — abgeleitet aus `go_gauge` **2.1.0** (Master). Neu in v1.7.0:
+Aktivierung der in 1.6.0 nur reservierten **Burn-Lookback-Settings**
+(`canon/entities.md` §8.4). Die drei Number-Slider (`burn_lookback_5h` /
+`burn_lookback_week` / `burn_lookback_month`, `entity_category: config`, Steps
+5/60/60, Defaults 120/720/2880) und der Reset-Button (`reset_burn_lookbacks`,
+`entity_category: diagnostic`, `unique_id` `burn_lookback_reset`) sind jetzt
+**Core-Entities** der `entities`-Liste: **27 Core-Entity-Einträge** (12 Sensoren,
+3 Binary-Sensoren, **7 Numbers**, 2 Switches, 3 Buttons) und **7
+`settings_ranges`** (4 Box-Numbers + 3 Burn-Lookback-Slider). Ebenfalls
+verbindlich: die **Burn-Rate als OLS-Steigung** über das Lookback-Fenster, die
+**D22-Diagnose-Attribute** (`burn_rate`: `lookback_minutes` / `samples` /
+`lookback_too_short`; `forecast`/`pace`: `forecast_recent` / `forecast_method` /
+`elapsed_fraction` / `window_seconds`) und das **echte Kalendermonat** aus
+`resetsAt` statt der pauschalen 30-Tage-Näherung (§2). Der **Checker** prüft
+zusätzlich `mode`, `step`, `default` (inkl. `default_required`) und
+`entity_category` statisch (D16). command_gauge: ⚠️ **CG-N5** (drei
+Burn-Lookback-Numbers), ⚠️ **CG-B6** (Reset-Button) und ⚠️ **CG-C3** (die
+D22-Attribute) registriert — der Paar-Change steht dort noch aus.
+Neu in v1.6.0:
 Der Kanon hebt den Konto-Vertrag auf eine **eigene Konto-ConfigEntry**
 (`canon/entities.md` §13). Anlass: Der bisherige Text beschrieb die
 Konto-Entities als „Catalog Owner / erste Workspace-Instanz" — real besitzt
@@ -143,16 +161,11 @@ Scope-Status-Sensor `api_status` (go_gauge 1.6.0), `subscription_active` ohne
 device_class.
 
 Registriert bleiben nur **API-blockierte** Abweichungen (Pricing-Katalog-Sensoren/
-Attribute), die **synthetische** month-Ableitung (CG-M1) und **domain-begründete**
-Number-Ranges.
+Attribute), die **synthetische** month-Ableitung (CG-M1), **domain-begründete**
+Number-Ranges sowie seit v1.7.0 die noch fehlenden command_gauge-Entities und
+-Attribute (CG-N5 / CG-B6 / CG-C3).
 
-**Geplant (Kanon 1.7.0):** Der Kanon **1.7.0** überführt die
-Burn-Lookback-Keys (`burn_lookback_5h`, `burn_lookback_week`,
-`burn_lookback_month`, `reset_burn_lookbacks`) aus `domain_extensions` in die
-`entities`-Liste (`canon/entities.md` §8.4) und macht das **echte
-Kalendermonat** aus `resetsAt` verbindlich (§2); go_gauge **2.1.0**
-implementiert diese Entities bereits, in Kanon 1.6.0 sind sie nur
-`phase: "reserved"` (`planned_canon_version: "1.7.0"`).
-
-Checker-Ergebnis: `check_canon.py` → go_gauge **0/0** (Referenz grün),
-command_gauge **0 Fehler / 8 registrierte Warnungen**.
+Checker-Ergebnis: `check_canon.py` → go_gauge **0 Fehler / 0 Warnungen**
+(Referenz grün), command_gauge **15 registrierte Warnungen**, **0 Fehler**. Die
+D22-Diagnose-Attribute an `forecast`, `pace`, `burn_rate` sind als ⚠️ CG-C3
+registriert und verschwinden mit dem ausstehenden Paar-Change in command_gauge.
