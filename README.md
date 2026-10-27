@@ -144,8 +144,8 @@ Kanon **v1.8.0** — neue verbindliche **Entity-Kategorie-Policy** (§8.0):
 Settings-Numbers und Auto-Update-Switches werden `entity_category: config`,
 der Reset-Button bleibt `diagnostic`, Primärdaten und Refresh-Aktionen bleiben
 `null`. Reine UI-/Registry-Metadaten: kein `unique_id`-, `entity_id`-, State-,
-Historien- oder Automationsbruch. Der Checker erzwingt die neuen Werte erst,
-nachdem beide Consumer nachgezogen sind (Schema-Phase B).
+Historien- oder Automationsbruch. Beide Consumer haben die Werte übernommen;
+der Checker erzwingt sie jetzt exakt.
 
 Kanon **v1.7.0** — abgeleitet aus `go_gauge` **2.1.0** (Master). Neu in v1.7.0:
 Aktivierung der in 1.6.0 nur reservierten **Burn-Lookback-Settings**

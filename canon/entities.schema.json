@@ -66,7 +66,8 @@
       "icons": ["mdi:speedometer", "mdi:shield-off-outline"],
       "unique_id_suffix": "percent",
       "attributes": ["workspace_key", "window", "status", "note", "resets_at_iso"],
-      "behavior": "None state on no_subscription/error; status via icon + attributes"
+      "behavior": "None state on no_subscription/error; status via icon + attributes",
+      "entity_category": null
     },
     {
       "id": "reset",
@@ -79,7 +80,8 @@
       "state_class": null,
       "icons": ["mdi:timer-reset"],
       "unique_id_suffix": "reset",
-      "attributes": []
+      "attributes": [],
+      "entity_category": null
     },
     {
       "id": "forecast",
@@ -93,7 +95,8 @@
       "icons": ["mdi:trending-up"],
       "unique_id_suffix": "forecast",
       "attributes": ["forecast_recent", "forecast_method", "elapsed_fraction", "window_seconds"],
-      "behavior": "linear projection percent/elapsed_fraction; may exceed 100; None right after reset"
+      "behavior": "linear projection percent/elapsed_fraction; may exceed 100; None right after reset",
+      "entity_category": null
     },
     {
       "id": "pace",
@@ -107,7 +110,8 @@
       "icons": ["mdi:check-circle-outline", "mdi:alert-circle-outline", "mdi:close-circle-outline", "mdi:speedometer-medium"],
       "unique_id_suffix": "pace",
       "attributes": ["forecast_percent", "green_below", "red_above", "forecast_recent", "forecast_method", "elapsed_fraction", "window_seconds"],
-      "behavior": "green/yellow/red via warning_threshold + pace_red_limit"
+      "behavior": "green/yellow/red via warning_threshold + pace_red_limit",
+      "entity_category": null
     },
     {
       "id": "remaining",
@@ -121,7 +125,8 @@
       "icons": ["mdi:gauge"],
       "unique_id_suffix": "remaining",
       "attributes": [],
-      "behavior": "100 - used; None (never 100) on missing subscription"
+      "behavior": "100 - used; None (never 100) on missing subscription",
+      "entity_category": null
     },
     {
       "id": "time_to_reset",
@@ -134,7 +139,8 @@
       "state_class": null,
       "icons": ["mdi:timer-sand"],
       "unique_id_suffix": "time_to_reset",
-      "attributes": []
+      "attributes": [],
+      "entity_category": null
     },
     {
       "id": "burn_rate",
@@ -147,7 +153,8 @@
       "state_class": "MEASUREMENT",
       "icons": ["mdi:fire"],
       "unique_id_suffix": "burn_rate",
-      "attributes": ["lookback_minutes", "samples", "lookback_too_short"]
+      "attributes": ["lookback_minutes", "samples", "lookback_too_short"],
+      "entity_category": null
     },
     {
       "id": "rate_limited",
@@ -159,7 +166,8 @@
       "icons": ["mdi:block-helper"],
       "unique_id_suffix": "limited",
       "attributes": [],
-      "behavior": "ON on window status rate-limited; unavailable (not OFF) on no_subscription/update failure"
+      "behavior": "ON on window status rate-limited; unavailable (not OFF) on no_subscription/update failure",
+      "entity_category": null
     },
     {
       "id": "subscription_active",
@@ -171,7 +179,8 @@
       "icons": ["mdi:shield-check-outline"],
       "unique_id_suffix": "subscription_active",
       "attributes": ["workspace_key", "note"],
-      "behavior": "ON on ok, OFF on no_subscription (note attribute), else unknown; NO device_class since 1.6.0 (CONNECTIVITY rendered as disconnected and was misread as API outage)"
+      "behavior": "ON on ok, OFF on no_subscription (note attribute), else unknown; NO device_class since 1.6.0 (CONNECTIVITY rendered as disconnected and was misread as API outage)",
+      "entity_category": null
     },
     {
       "id": "api_status",
@@ -186,7 +195,8 @@
       "icons": ["mdi:cloud-alert"],
       "unique_id_suffix": "api_status",
       "attributes": ["workspace_key", "raw_status", "note", "last_update_success"],
-      "behavior": "Per-scope cause-of-failure enum (not account-wide): ok; ok+rate-limited window -> rate_limited; no_subscription (403 EntitlementError); error with AuthError/401 in note -> auth_error; other error -> api_error (transient); else unknown. Raw enum keys, no state translations; entity_registry_enabled_default True"
+      "behavior": "Per-scope cause-of-failure enum (not account-wide): ok; ok+rate-limited window -> rate_limited; no_subscription (403 EntitlementError); error with AuthError/401 in note -> auth_error; other error -> api_error (transient); else unknown. Raw enum keys, no state translations; entity_registry_enabled_default True",
+      "entity_category": null
     },
     {
       "id": "api_reachable",
@@ -198,7 +208,8 @@
       "icons": [],
       "unique_id_suffix": "api_reachable",
       "attributes": [],
-      "behavior": "go_gauge: account-wide, evidence/TTL based tri-state (own account ConfigEntry). ON = at least one FRESH success (catalog fetch ok OR workspace status ok); neutral answers (no_subscription/auth_error) never count as success; only fresh failures -> OFF; no fresh evidence -> unknown. TTL = 2x account models interval (fallback 2x default 60) / 3x the smallest workspace usage interval. command_gauge alias always available"
+      "behavior": "go_gauge: account-wide, evidence/TTL based tri-state (own account ConfigEntry). ON = at least one FRESH success (catalog fetch ok OR workspace status ok); neutral answers (no_subscription/auth_error) never count as success; only fresh failures -> OFF; no fresh evidence -> unknown. TTL = 2x account models interval (fallback 2x default 60) / 3x the smallest workspace usage interval. command_gauge alias always available",
+      "entity_category": null
     },
     {
       "id": "model_catalog",
@@ -212,7 +223,8 @@
       "icons": ["mdi:format-list-bulleted"],
       "unique_id_suffix": "model_catalog",
       "attributes": ["models_updated_at", "count", "live_count", "free_models", "cheapest_model", "cheapest_overall", "ranking_by_cost", "catalog_json"],
-      "behavior": "ONE sensor carries the whole catalog as dynamic JSON attributes; owned by the account ConfigEntry (device identifiers {(DOMAIN, \"account\")}, unique_id prefix 'account_') - no catalog owner on workspace entries"
+      "behavior": "ONE sensor carries the whole catalog as dynamic JSON attributes; owned by the account ConfigEntry (device identifiers {(DOMAIN, \"account\")}, unique_id prefix 'account_') - no catalog owner on workspace entries",
+      "entity_category": null
     },
     {
       "id": "live_models_count",
@@ -225,7 +237,8 @@
       "state_class": "MEASUREMENT",
       "icons": ["mdi:check-network-outline"],
       "unique_id_suffix": "models_live_count",
-      "attributes": []
+      "attributes": [],
+      "entity_category": null
     },
     {
       "id": "cheapest_model",
@@ -238,7 +251,8 @@
       "state_class": null,
       "icons": ["mdi:crown-outline"],
       "unique_id_suffix": "cheapest_model",
-      "attributes": ["cheapest_overall", "ratio_usd_per_1m"]
+      "attributes": ["cheapest_overall", "ratio_usd_per_1m"],
+      "entity_category": null
     },
     {
       "id": "free_models",
@@ -251,7 +265,8 @@
       "state_class": null,
       "icons": ["mdi:gift-outline"],
       "unique_id_suffix": "free_models",
-      "attributes": []
+      "attributes": [],
+      "entity_category": null
     },
     {
       "id": "warning_threshold",
@@ -268,7 +283,8 @@
       "default": 80,
       "step": 1,
       "mode": "box",
-      "behavior": "NumberMode.BOX, step 1, persistent via persist_options"
+      "behavior": "NumberMode.BOX, step 1, persistent via persist_options",
+      "entity_category": "config"
     },
     {
       "id": "pace_red_limit",
@@ -284,7 +300,8 @@
       "max": 300,
       "default": 100,
       "step": 1,
-      "mode": "box"
+      "mode": "box",
+      "entity_category": "config"
     },
     {
       "id": "usage_refresh_min",
@@ -301,7 +318,8 @@
       "default": 10,
       "step": 1,
       "mode": "box",
-      "behavior": "changing value triggers recalculate_interval()"
+      "behavior": "changing value triggers recalculate_interval()",
+      "entity_category": "config"
     },
     {
       "id": "models_refresh_min",
@@ -318,7 +336,8 @@
       "default": 60,
       "step": 1,
       "mode": "box",
-      "behavior": "GLOBAL on the go_gauge account ConfigEntry (not per workspace): NumberMode.BOX, step 1, range 1-1440, default 60; live effect via AccountCoordinator.set_fetch_interval + persist_account_options, no entry reload"
+      "behavior": "GLOBAL on the go_gauge account ConfigEntry (not per workspace): NumberMode.BOX, step 1, range 1-1440, default 60; live effect via AccountCoordinator.set_fetch_interval + persist_account_options, no entry reload",
+      "entity_category": "config"
     },
     {
       "id": "burn_lookback_5h",
@@ -386,7 +405,8 @@
       "icons": ["mdi:autorenew"],
       "unique_id_suffix": "auto_update_usage",
       "attributes": [],
-      "behavior": "workspace-local: toggles the usage cycle, recalculate_interval() + persist_options"
+      "behavior": "workspace-local: toggles the usage cycle, recalculate_interval() + persist_options",
+      "entity_category": "config"
     },
     {
       "id": "auto_update_models",
@@ -397,7 +417,8 @@
       "icons": ["mdi:autorenew"],
       "unique_id_suffix": "auto_update_models",
       "attributes": [],
-      "behavior": "GLOBAL on the go_gauge account ConfigEntry (default ON, replaces the per-workspace control): toggles AccountCoordinator.auto_fetch live via set_auto_fetch + persist_account_options, no recalculate_interval and no entry reload"
+      "behavior": "GLOBAL on the go_gauge account ConfigEntry (default ON, replaces the per-workspace control): toggles AccountCoordinator.auto_fetch live via set_auto_fetch + persist_account_options, no recalculate_interval and no entry reload",
+      "entity_category": "config"
     },
     {
       "id": "refresh",
@@ -408,7 +429,8 @@
       "icons": ["mdi:refresh"],
       "unique_id_suffix": "refresh",
       "attributes": [],
-      "behavior": "workspace device-scoped: forces the usage cycle ONLY (never a catalog fetch, which belongs to the account entry)"
+      "behavior": "workspace device-scoped: forces the usage cycle ONLY (never a catalog fetch, which belongs to the account entry)",
+      "entity_category": null
     },
     {
       "id": "reset_burn_lookbacks",
@@ -431,27 +453,28 @@
       "icons": ["mdi:refresh"],
       "unique_id_suffix": "refresh",
       "attributes": [],
-      "behavior": "forces the account catalog fetch only (AccountCoordinator.async_fetch_now, the only account HTTP path); same translation_key 'refresh' as the workspace button, separated by device/unique_id prefix 'account_'"
+      "behavior": "forces the account catalog fetch only (AccountCoordinator.async_fetch_now, the only account HTTP path); same translation_key 'refresh' as the workspace button, separated by device/unique_id prefix 'account_'",
+      "entity_category": null
     }
   ],
   "domain_extensions": {
     "command_gauge": [
-      {"translation_key": "monthly_credits", "platform": "sensor", "unit": "USD", "state_class": "MEASUREMENT", "icon": "mdi:calendar-month", "name_en": "Monthly credits", "reason": "CommandCode credit model (domain-specific, allowed)"},
-      {"translation_key": "purchased_credits", "platform": "sensor", "unit": "USD", "state_class": "MEASUREMENT", "icon": "mdi:shopping", "name_en": "Purchased credits", "reason": "dto."},
-      {"translation_key": "free_credits", "platform": "sensor", "unit": "USD", "state_class": "MEASUREMENT", "icon": "mdi:gift-outline", "name_en": "Free credits", "reason": "dto."},
-      {"translation_key": "remaining_credits", "platform": "sensor", "unit": "USD", "state_class": "MEASUREMENT", "icon": "mdi:wallet", "name_en": "Remaining credits", "reason": "dto."},
-      {"translation_key": "total_cost", "platform": "sensor", "unit": "USD", "state_class": "MEASUREMENT", "icon": "mdi:cash", "name_en": "Total cost", "reason": "dto."},
-      {"translation_key": "request_count", "platform": "sensor", "unit": null, "state_class": "MEASUREMENT", "icon": "mdi:counter", "name_en": "Requests", "reason": "dto."},
-      {"translation_key": "token_count", "platform": "sensor", "unit": null, "state_class": "MEASUREMENT", "icon": "mdi:counter", "name_en": "Tokens", "reason": "dto."},
-      {"translation_key": "plan", "platform": "sensor", "unit": null, "state_class": null, "icon": "mdi:shield-account-outline", "name_en": "Plan", "reason": "dto."},
-      {"translation_key": "credits_below_threshold", "platform": "binary_sensor", "device_class": "PROBLEM", "icon": null, "name_en": "Credits below threshold", "reason": "dto."}
+      {"translation_key": "monthly_credits", "entity_category": null, "platform": "sensor", "unit": "USD", "state_class": "MEASUREMENT", "icon": "mdi:calendar-month", "name_en": "Monthly credits", "reason": "CommandCode credit model (domain-specific, allowed)"},
+      {"translation_key": "purchased_credits", "entity_category": null, "platform": "sensor", "unit": "USD", "state_class": "MEASUREMENT", "icon": "mdi:shopping", "name_en": "Purchased credits", "reason": "dto."},
+      {"translation_key": "free_credits", "entity_category": null, "platform": "sensor", "unit": "USD", "state_class": "MEASUREMENT", "icon": "mdi:gift-outline", "name_en": "Free credits", "reason": "dto."},
+      {"translation_key": "remaining_credits", "entity_category": null, "platform": "sensor", "unit": "USD", "state_class": "MEASUREMENT", "icon": "mdi:wallet", "name_en": "Remaining credits", "reason": "dto."},
+      {"translation_key": "total_cost", "entity_category": null, "platform": "sensor", "unit": "USD", "state_class": "MEASUREMENT", "icon": "mdi:cash", "name_en": "Total cost", "reason": "dto."},
+      {"translation_key": "request_count", "entity_category": null, "platform": "sensor", "unit": null, "state_class": "MEASUREMENT", "icon": "mdi:counter", "name_en": "Requests", "reason": "dto."},
+      {"translation_key": "token_count", "entity_category": null, "platform": "sensor", "unit": null, "state_class": "MEASUREMENT", "icon": "mdi:counter", "name_en": "Tokens", "reason": "dto."},
+      {"translation_key": "plan", "entity_category": null, "platform": "sensor", "unit": null, "state_class": null, "icon": "mdi:shield-account-outline", "name_en": "Plan", "reason": "dto."},
+      {"translation_key": "credits_below_threshold", "entity_category": null, "platform": "binary_sensor", "device_class": "PROBLEM", "icon": null, "name_en": "Credits below threshold", "reason": "dto."}
     ]
   },
   "settings_ranges": {
-    "warning_threshold": {"unit": "%", "min": 1, "max": 100, "default": 80, "step": 1, "mode": "box", "number": "warning_threshold"},
-    "pace_red_limit": {"unit": "%", "min": 1, "max": 300, "default": 100, "step": 1, "mode": "box", "number": "pace_red_limit"},
-    "usage_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 10, "step": 1, "mode": "box", "number": "usage_refresh_min"},
-    "models_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 60, "step": 1, "mode": "box", "number": "models_refresh_min"},
+    "warning_threshold": {"unit": "%", "min": 1, "max": 100, "default": 80, "step": 1, "mode": "box", "entity_category": "config", "number": "warning_threshold"},
+    "pace_red_limit": {"unit": "%", "min": 1, "max": 300, "default": 100, "step": 1, "mode": "box", "entity_category": "config", "number": "pace_red_limit"},
+    "usage_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 10, "step": 1, "mode": "box", "entity_category": "config", "number": "usage_refresh_min"},
+    "models_refresh_min": {"unit": "min", "min": 1, "max": 1440, "default": 60, "step": 1, "mode": "box", "entity_category": "config", "number": "models_refresh_min"},
     "burn_lookback_5h": {"unit": "min", "min": 15, "max": 300, "default": 120, "step": 5, "mode": "slider", "entity_category": "config", "default_required": true, "number": "burn_lookback_5h"},
     "burn_lookback_week": {"unit": "min", "min": 60, "max": 10080, "default": 720, "step": 60, "mode": "slider", "entity_category": "config", "default_required": true, "number": "burn_lookback_week"},
     "burn_lookback_month": {"unit": "min", "min": 60, "max": 10080, "default": 2880, "step": 60, "mode": "slider", "entity_category": "config", "default_required": true, "number": "burn_lookback_month"}
