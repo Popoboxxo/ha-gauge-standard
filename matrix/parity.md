@@ -157,16 +157,16 @@ Trennung nach Stunden/Woche/Monat über Kategorien (nur über Namen/Keys).
 
 | Entity-Gruppe | Kategorie | go_gauge | command_gauge | Status |
 |---|---|---|---|---|
-| Settings-Numbers (`warning_threshold`, `pace_red_limit`, `usage_refresh_min`, `models_refresh_min`) | `config` | ✅ ab 2.1.1 | ⚠️ Transition (Paar-Change) | — |
+| Settings-Numbers (`warning_threshold`, `pace_red_limit`, `usage_refresh_min`, `models_refresh_min`) | `config` | ✅ | ✅ | ✅ |
 | Burn-Lookback-Numbers (`burn_lookback_5h/week/month`) | `config` | ✅ | ⚠️ CG-N5 (Entities fehlen) | ⚠️ |
-| Auto-Update-Switches (`auto_update_usage`, `auto_update_models`) | `config` | ✅ ab 2.1.1 | ⚠️ Transition (Paar-Change) | — |
+| Auto-Update-Switches (`auto_update_usage`, `auto_update_models`) | `config` | ✅ | ✅ | ✅ |
 | Reset-Button (`reset_burn_lookbacks`) | `diagnostic` | ✅ | ⚠️ CG-B6 (Button fehlt) | ⚠️ |
 | Primärdaten (Sensoren/Binary-Sensoren) | `null` | ✅ | ✅ | ✅ |
 | Refresh-Buttons (`refresh`, `account_refresh`) | `null` | ✅ | ✅ | ✅ |
 
-**Übergang:** Solange die Consumer noch `null` liefern, sind die neuen
-`config`-Werte im Schema nicht erzwungen (Phase A). Nach dem Paar-Change
-erzwingt Phase B die exakten Werte; es entstehen **keine neuen CG-IDs**.
+**Verbindlich:** Beide Consumer liefern die exakten Werte; der Checker
+erzwingt sie. Es entstehen **keine neuen CG-IDs**. Die Burn-Lookback- und
+Reset-Abweichungen in command_gauge bleiben die bestehenden CG-N5/CG-B6.
 
 ## Repository-Hygiene (v1.7.0)
 

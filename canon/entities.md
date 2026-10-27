@@ -10,8 +10,8 @@ Abweichungen sind nur als registrierter ⚠️-Eintrag erlaubt
 > config`; der Reset-Button bleibt `diagnostic`; Primärdaten und
 > Refresh-Aktionen bleiben `null`. Die Kategorien sind reine UI-/Registry-
 > Metadaten (kein `unique_id`-, `entity_id`-, State- oder Historienbruch).
-> Übergang: Der Checker erzwingt die neuen Werte für die bestehenden Settings
-> erst, sobald beide Consumer nachgezogen sind (Schema-Phase B).
+> Beide Consumer (`go_gauge`, `command_gauge`) haben die Werte übernommen;
+> der Checker erzwingt sie jetzt exakt.
 >
 > **Neu in Kanon v1.7.0 (2026-10-26):** Aktivierung der in 1.6.0 nur
 > reservierten Burn-Lookback-Settings. Anlass: go_gauge **2.1.0** implementiert
